@@ -1,6 +1,6 @@
 # CONTRIBUTING – Ciel & Terre International – WindDatas v1
 
-[← Back to Documentation Index](INDEX.md)
+[← Back to README](../README.md)
 
 **File:** <FILENAME>  
 **Version:** v1.x  

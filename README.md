@@ -1,68 +1,79 @@
-# WindDatas – Internal Wind Data Tool
+
+# WindDatas – Internal Wind Data Tool  
 Ciel & Terre International – R&D
 
-WindDatas is an internal Python tool developed to retrieve, normalize, and analyze historical wind data from multiple meteorological sources (observed and modeled).
-It is used within Ciel & Terre International to support:
-- wind resource assessments
-- building code wind analysis
-- engineering decision-making
-- cross-source wind model comparisons
-- automated wind reporting for site studies
+WindDatas is an internal Python tool developed to retrieve, normalize, and analyze historical wind data from multiple meteorological sources (observed and modeled).  
+It is designed for engineering teams performing wind assessments, building code validations, model benchmarking, and automated reporting.
 
-This repository corresponds to WindDatas v1, the stable reference implementation.
+This repository corresponds to **WindDatas v1**, the stable reference implementation.
 
---------------------------------------------------------------------------------
-## Overview
---------------------------------------------------------------------------------
+---
 
-WindDatas automates the full workflow for historical wind analysis:
-1. Site selection
-2. Automatic data retrieval
-3. Normalization of wind datasets
-4. Descriptive and extreme-value statistics
-5. Cross-source comparisons
-6. Report generation
+# Overview
 
---------------------------------------------------------------------------------
-## Key Features
---------------------------------------------------------------------------------
+WindDatas automates the full workflow for wind analysis:
 
-### Multi-source wind data acquisition
-Observed sources:
-- NOAA ISD
-- Meteostat
+1. Site selection  
+2. Multi-source data acquisition  
+3. Standardization and normalization  
+4. Descriptive and extreme-value statistics  
+5. Cross-source comparisons  
+6. Automated report generation  
 
-Modeled sources:
-- ERA5
-- NASA POWER
-- Open-Meteo
+---
 
-### Automatic normalization
-- Units converted to m/s
-- Timestamps in UTC
-- Vertical extrapolation when metadata is available
-- Standardized averaging periods
-- Consistent handling of gusts vs mean wind
+## Documentation Index
 
-### Statistical analysis
-- Descriptive statistics
-- Missing-data and completeness assessment
-- Outlier detection
-- Weibull fitting
-- Gumbel and GEV extreme-value fitting
-- 50-year return period wind estimation
+The complete project documentation is located in the `docs/` directory.  
+You can navigate to any document directly using the links below:
 
-### Report generation
-- Figures
-- Tables
-- Word report for each site
+### Core Documentation
 
---------------------------------------------------------------------------------
-## System Architecture
---------------------------------------------------------------------------------
+- [METHODOLOGY.md](./docs/METHODOLOGY.md)  
+  Scientific framework, normalization rules, and statistical methods.
 
-Pipeline diagram:
+- [DATAS.md](./docs/DATAS.md)  
+  Detailed description of all meteorological data sources.
 
+### Development & Governance
+
+- [CONTRIBUTING.md](./docs/CONTRIBUTING.md)  
+  Rules for contributing, branching, commits, and PR workflow.
+
+- [WORKFLOW.md](./docs/WORKFLOW.md)  
+  Git usage guidelines and release flow.
+
+### Project Planning
+
+- [ROADMAP.md](./docs/ROADMAP.md)  
+  Strategic plan for v1.x → v2.x evolution.
+
+- [TODO.md](./docs/TODO.md)  
+  Technical, scientific, and maintenance tasks grouped by priority.
+
+### Legal
+
+- [LICENSE](./docs/LICENSE)  
+  MIT License.
+
+---
+
+# Key Features
+
+- Multi-source historical wind retrieval  
+- Automatic preprocessing (UTC, units, heights, resampling)  
+- Weibull, Gumbel, and GEV extreme-value modeling  
+- Outlier detection and data quality metrics  
+- Automated Word report generation  
+- Modular Python architecture  
+
+---
+
+# System Architecture
+
+Below is the **full pipeline diagram**, using detailed ASCII boxes and flows.
+
+```
                +---------------------+
                |   modele_sites.csv  |
                +----------+----------+
@@ -70,60 +81,66 @@ Pipeline diagram:
                           v
                     +-----+-----+
                     | script.py |
+                    | (main UI) |
                     +-----+-----+
                           |
-     -------------------------------------------------
-     |            |             |            |        |
-     v            v             v            v        v
-  NOAA ISD    Meteostat       ERA5      NASA POWER  Open-Meteo
- (observed)  (observed)     (model)      (model)     (model)
-     \            |             |            |          /
-      \           |             |            |         /
-       \          |             |            |        /
-        +---------+-------------+------------+-------+
+                          v
+             +------------+-------------+
+             |   Source Manager         |
+             +------------+-------------+
+                          |
+      -----------------------------------------------------
+      |            |             |            |           |
+      v            v             v            v           v
++-----------+ +-----------+ +-----------+ +-----------+ +-----------+
+| NOAA ISD  | | Meteostat | |   ERA5    | | NASA POW. | | OpenMeteo |
+| observed  | | observed  | |  model    | |  model    | |   model   |
++-----+-----+ +-----+-----+ +-----+-----+ +-----+-----+ +-----+-----+
+      \            |             |            |            /
+       \           |             |            |           /
+        \          |             |            |          /
+         +---------+-------------+------------+---------+
                           |
                           v
-                +---------+-----------+
-                |  analysis_runner.py |
-                +---------+-----------+
+              +-----------+-------------+
+              | Normalization Pipeline |
+              | - timestamps (UTC)     |
+              | - units (m/s)          |
+              | - height correction    |
+              | - averaging periods    |
+              +-----------+-------------+
                           |
                           v
-                +---------+-----------+
-                | report_generator.py |
-                +---------+-----------+
+                 +--------+--------+
+                 | Stats Engine    |
+                 | (analysis_runner)|
+                 +--------+--------+
                           |
                           v
-          data/<SITE>/report/fiche_<SITE>.docx
+          +---------------+----------------+
+          | Extreme Value Module (EVT)     |
+          | - Weibull                      |
+          | - Gumbel                       |
+          | - GEV                          |
+          +---------------+----------------+
+                          |
+                          v
+              +-----------+-----------+
+              | Report Generator      |
+              | (Word, figures)       |
+              +-----------+-----------+
+                          |
+                          v
+      data/<SITE>/report/fiche_<SITE>.docx
+```
 
+---
 
---------------------------------------------------------------------------------
-## Data Sources
---------------------------------------------------------------------------------
+# Repository Structure
 
-NOAA ISD  
-Observed, hourly, long historical records  
-https://www.ncei.noaa.gov/products/integrated-surface-database
+A clean, GitHub-friendly hierarchical layout:
 
-Meteostat  
-Observed, hourly, curated  
-https://meteostat.net
-
-ERA5  
-Reanalysis, hourly, global  
-https://cds.climate.copernicus.eu
-
-NASA POWER  
-Daily modeled climatology  
-https://power.larc.nasa.gov
-
-Open-Meteo  
-Hourly modeled wind and gusts  
-https://open-meteo.com
-
---------------------------------------------------------------------------------
-## Repository Structure
---------------------------------------------------------------------------------
-
+```
 Wind-Data-v1/
 │
 ├── README.md
@@ -168,94 +185,112 @@ Wind-Data-v1/
 │
 ├── tests/
 │   ├── test_openmeteo.py
-│   └── test_utils.py
+│   ├── test_utils.py
+│   └── ...
 │
 └── data/
     (generated automatically, ignored by Git)
+```
 
+---
 
---------------------------------------------------------------------------------
-## Installation
---------------------------------------------------------------------------------
+# Data Sources
+
+WindDatas integrates multiple meteorological datasets:
+
+| Source        | Type       | Resolution | Strengths | Limitations |
+|---------------|------------|------------|-----------|-------------|
+| NOAA ISD      | Observed   | Hourly     | High credibility | Metadata inconsistencies |
+| Meteostat     | Observed   | Hourly     | Cleaned NOAA | May inherit gaps |
+| ERA5          | Model      | Hourly     | No gaps, global | Underestimates extremes |
+| NASA POWER    | Model      | Daily      | Smooth climatology | Not suitable for gust extremes |
+| Open-Meteo    | Model      | Hourly     | Easy API | Model-dependent gusts |
+
+See full technical specification in `docs/DATAS.md`.
+
+---
+
+# Installation
 
 Clone the repository:
 
-    git clone https://github.com/Ciel-et-Terre-International/Wind-Data-v1.git
-    cd Wind-Data-v1
+```
+git clone https://github.com/Ciel-et-Terre-International/Wind-Data-v1.git
+cd Wind-Data-v1
+```
 
-Create the environment:
+Create environment:
 
-    conda env create -f environment.yml
-    conda activate winddatas
+```
+conda env create -f environment.yml
+conda activate winddatas
+```
 
---------------------------------------------------------------------------------
-## Usage
---------------------------------------------------------------------------------
+---
+
+# Usage
 
 Windows launcher:
 
-    run_winddatas.bat
+```
+run_winddatas.bat
+```
 
 Direct execution:
 
-    conda activate winddatas
-    python script.py
+```
+conda activate winddatas
+python script.py
+```
 
---------------------------------------------------------------------------------
-## Outputs
---------------------------------------------------------------------------------
+---
 
-For each site:
+# Outputs
 
-    data/<SITE>/
-        era5_<SITE>.csv
-        meteostat_<SITE>.csv
-        noaa_station1_<SITE>.csv
-        noaa_station2_<SITE>.csv
-        openmeteo_<SITE>.csv
-        nasa_power_<SITE>.csv
+Each site produces:
 
-        figures_and_tables/
-            statistical tables
-            outlier tables
-            time series
-            histograms
-            boxplots
-            Weibull and Gumbel fitting plots
-            wind rose
+```
+data/<SITE>/
+    raw CSV files per source
+    figures_and_tables/
+        descriptive stats
+        outliers
+        histograms
+        time series
+        Weibull/Gumbel plots
+        wind roses
+    report/
+        fiche_<SITE>.docx
+```
 
-        report/
-            fiche_<SITE>.docx
+---
 
---------------------------------------------------------------------------------
-## Documentation
---------------------------------------------------------------------------------
+# Documentation
 
-All documentation is located under docs/, the entry point is:
+All documents are in:
 
-    docs/INDEX.md
+```
+docs/INDEX.md
+```
 
-Main documents:
-- METHODOLOGY.md
-- DATAS.md
-- CONTRIBUTING.md
-- WORKFLOW.md
-- ROADMAP.md
-- TODO.md
-- SECURITY.md
-- LICENSE
+Main references include:
 
---------------------------------------------------------------------------------
-## License
---------------------------------------------------------------------------------
+- METHODOLOGY.md  
+- DATAS.md  
+- CONTRIBUTING.md  
+- WORKFLOW.md  
+- ROADMAP.md  
+- TODO.md  
 
-WindDatas is distributed internally under the MIT License.
-See docs/LICENSE.
+---
 
---------------------------------------------------------------------------------
-## Contact
---------------------------------------------------------------------------------
+# License
 
-Project lead and maintainer:  
-Adrien Salicis  
-adrien.salicis@cieletterre.net
+MIT License (see `docs/LICENSE`).
+
+---
+
+# Contact
+
+Project lead: Adrien Salicis  
+Email: adrien.salicis@cieletterre.net

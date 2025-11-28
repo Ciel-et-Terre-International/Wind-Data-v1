@@ -5,6 +5,8 @@ This document details all meteorological data sources used in the WindDatas proj
 
 ---
 
+[← Back to README](../README.md)
+
 ## Weather Data Sources
 
 ### 1. NOAA – ISD (Integrated Surface Dataset)
@@ -110,7 +112,7 @@ Raw Meteostat data is retrieved in km/h (API native unit), and then converted to
 | `wind_direction` | 10-minute average wind direction    | deg   |
 | `gust`           | Max 3-second gust during interval   | km/h  |
 
-#### 🔎 Technical Summary
+#### Technical Summary
 
 | Element             | Detail                                         |
 |---------------------|------------------------------------------------|
@@ -195,7 +197,7 @@ df = df.rename(columns={
 | `wind_direction` | Avg direction from `WND` or `DRCT`    | degrees|
 | `gust`           | Max 5-sec gust (`GUST`)               | m/s    |
 
-#### 🔎 Technical Summary
+#### Technical Summary
 
 | Element             | Detail                                                     |
 |---------------------|------------------------------------------------------------|
@@ -383,7 +385,7 @@ This trade-off is documented and assumed for full transparency.
 | `10m_u_component_of_wind`     | Zonal (west-east) wind component    | m/s  |
 | `10m_v_component_of_wind`     | Meridional (south-north) component  | m/s  |
 
-#### 🔎 Technical Summary
+#### Technical Summary
 
 | Element             | Detail                                              |
 |---------------------|-----------------------------------------------------|
