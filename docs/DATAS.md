@@ -73,7 +73,7 @@ Wind speeds depend heavily on the averaging duration. One cannot directly compar
 
 ## 1. Meteostat – Observed Data from Weather Stations
 
-🔗 **API Link**: [https://dev.meteostat.net/](https://dev.meteostat.net/)
+**API Link**: [https://dev.meteostat.net/](https://dev.meteostat.net/)
 
 ### Source Profile: Meteostat
 
@@ -148,7 +148,7 @@ df = df.rename(columns={
 
 ## 2. NOAA ISD – Raw Hourly Observational Data
 
-🔗 **Data link**: [https://www.ncei.noaa.gov/data/global-hourly/](https://www.ncei.noaa.gov/data/global-hourly/)
+**Data link**: [https://www.ncei.noaa.gov/data/global-hourly/](https://www.ncei.noaa.gov/data/global-hourly/)
 
 ### Source Profile: NOAA ISD (Integrated Surface Dataset)
 
@@ -207,7 +207,7 @@ df = df.rename(columns={
 | Temporal frequency  | Hourly                                                     |
 | Standard followed   | WMO / NOAA ISD official format                             |
 
-#### 🔗 Official References
+#### Official References
 
 - Dataset: [NOAA Global Hourly Data](https://www.ncei.noaa.gov/data/global-hourly/)
 - Format: [ISH Format PDF](https://www.ncei.noaa.gov/pub/data/noaa/ish-format-document.pdf)
@@ -242,14 +242,14 @@ df_daily = df.groupby('date').agg({
 
 ## 3. Open-Meteo – Modeled Data via API
 
-🔗 **API Link**: [https://open-meteo.com/](https://open-meteo.com/)
+**API Link**: [https://open-meteo.com/](https://open-meteo.com/)
 
 ### Source Profile: Open-Meteo
 
 #### Data Type
 - **Modeled data**, derived from open-source numerical weather models.
 - Provided by the **Open-Meteo API**, which aggregates several public datasets.
-- ❗ These are **not observations**, but **interpolated forecasts or reanalyses**.
+- These are **not observations**, but **interpolated forecasts or reanalyses**.
 
 Raw Open-Meteo data is retrieved in km/h and converted to m/s (1 m/s = 3.6 km/h) within WindDatas for consistency.
 
@@ -286,7 +286,7 @@ For historical weather, Open-Meteo uses archived forecasts or reanalyses (exact 
 | `windgusts_10m`     | Hourly max modeled gust at 10 m        | km/h   |
 | `winddirection_10m` | Hourly modeled average direction       | degrees|
 
-#### 🔎 Technical Summary
+#### Technical Summary
 
 | Element             | Detail                                                         |
 |---------------------|----------------------------------------------------------------|
@@ -309,7 +309,7 @@ Even though Open-Meteo delivers reasonably accurate average wind data, it can **
 - **No microclimate detection**: Models do not "see" specific effects like valleys, passes, or coastal gaps.
 - **Temporal smoothing**: Hourly values are averaged over time steps (~1h), hiding sub-hourly variability.
 
-#### 🔗 Official References
+#### Official References
 
 - Docs: [https://open-meteo.com/en/docs](https://open-meteo.com/en/docs)
 - Historical API: [https://open-meteo.com/en/docs/historical-weather-api](https://open-meteo.com/en/docs/historical-weather-api)
@@ -332,7 +332,7 @@ df = pd.merge(df_daily, df_dir, on="time", how="left")
 
 ## 4. ERA5 – Reanalysis Data from ECMWF
 
-🔗 **Copernicus CDS Link**: [ERA5 Single Levels Dataset](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels)
+**Copernicus CDS Link**: [ERA5 Single Levels Dataset](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels)
 
 ### Source Profile: ERA5 (Copernicus / ECMWF)
 
@@ -428,7 +428,7 @@ c.retrieve("reanalysis-era5-single-levels-timeseries", request).download(...)
 
 ## 5. NASA POWER – NASA Modeled Reanalysis Data
 
-🔗 **API Link**: [https://power.larc.nasa.gov/](https://power.larc.nasa.gov/)
+**API Link**: [https://power.larc.nasa.gov/](https://power.larc.nasa.gov/)
 
 ### Retrieved Variables
 

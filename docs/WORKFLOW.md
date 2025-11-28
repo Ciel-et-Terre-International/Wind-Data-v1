@@ -1,81 +1,127 @@
+# WORKFLOW – Git Workflow for WindDatas (Ciel & Terre International)
 
-# Git Workflow – WindDatas Project
+[← Back to Documentation Index](INDEX.md)
 
-This document outlines the contribution rules, branch structure, and Git best practices to follow in the WindDatas project.
-
----
-
-## Branch Structure
-
-| Branch         | Purpose                                       |
-|----------------|-----------------------------------------------|
-| `main`         | Stable, published versions (tagged releases)  |
-| `dev`          | Active development, integration of features   |
-| `feature/...`  | New specific features                         |
-| `bugfix/...`   | Isolated bug fixes                            |
-| `docs/...`     | Documentation changes                         |
+**File:** <FILENAME>  
+**Version:** v1.x  
+**Last updated:** <DATE>  
+**Maintainer:** Adrien Salicis  
+**Related docs:** See docs/INDEX.md for full documentation index.
 
 ---
 
-## Commit Convention
+This document summarizes the Git workflow used for WindDatas v1.
 
-Use the following prefixes in your commit messages:
+------------------------------------------------------------
+1. Branch Structure
+------------------------------------------------------------
 
-- `feat:` for a new feature
-- `fix:` for a bug fix
-- `chore:` for minor maintenance tasks (e.g., doc update)
-- `refactor:` for code restructuring without functional changes
-- `test:` for unit tests or test fixes
-- `docs:` for pure documentation updates
+main      → stable code used internally  
+dev       → optional integration branch for parallel features  
+feature/* → new features  
+fix/*     → bug fixes  
+refactor/* → code structure improvements  
+docs/*    → documentation updates
 
-Examples:
+Never commit directly to main.
+Always work on a dedicated branch.
 
-```bash
-git commit -m "feat: add MERRA-2 fetcher"
-git commit -m "fix: handle missing dates in Meteostat"
-git commit -m "docs: add link to interactive globe"
-```
+------------------------------------------------------------
+2. Typical Workflow
+------------------------------------------------------------
 
----
+1. Update local repo:
+   git checkout main
+   git pull
 
-## Standard Development Cycle
+2. Create a feature branch:
+   git checkout -b feature/my-new-function
 
-1. Clone the repository
-2. Create a new branch from `dev`:
-   ```bash
-   git checkout dev
-   git checkout -b feature/your-feature-name
-   ```
-3. Develop and test locally
-4. Commit and push your changes:
-   ```bash
-   git push -u origin feature/your-feature-name
-   ```
-5. Open a Pull Request targeting `dev`
-6. After review, merge into `dev`
-7. Merge `dev` into `main` only for tagged release versions
+3. Implement and commit:
+   git add .
+   git commit -m "feat: add my new function"
 
----
+4. Push the branch:
+   git push -u origin feature/my-new-function
 
-## Versioning
+5. Open a Pull Request on GitHub
 
-We follow semantic versioning:
+6. After review, merge into main
 
-- `v1.1.0` → new major features
-- `v1.1.1` → minor fixes
-- `v2.0.0` → breaking changes or structural overhaul
+7. Update local main again:
+   git checkout main
+   git pull
 
-Stable versions are tagged as follows:
+------------------------------------------------------------
+3. Commit Messages
+------------------------------------------------------------
 
-```bash
-git tag v1.1.0
-git push origin v1.1.0
-```
+Use conventional commits:
 
----
+feat: new feature  
+fix: bug fix  
+refactor: code restructuring  
+docs: documentation updates  
+test: adding tests  
+chore: maintenance  
 
-## Collaborative Work
+Example:
+feat: add ERA5 gust normalization
 
-- Use Issues to report bugs or propose tasks
-- Stay aligned with the roadmap
-- Always document your contributions clearly
+------------------------------------------------------------
+4. Pull Request Rules
+------------------------------------------------------------
+
+- One PR per feature  
+- PR must be self-contained  
+- Documentation updated if necessary  
+- Tests should pass  
+- PR description must be clear  
+- Avoid mixing unrelated changes
+
+------------------------------------------------------------
+5. Versioning and Releases
+------------------------------------------------------------
+
+Releases follow semantic versioning:
+
+MAJOR.MINOR.PATCH
+
+Example:
+v1.2.0
+
+Checklist before release:
+- CHANGELOG.md updated  
+- main is stable  
+- tag created:
+  git tag v1.2.0
+  git push --tags
+
+------------------------------------------------------------
+6. Coding Standards
+------------------------------------------------------------
+
+- Follow PEP8  
+- Prefer explicit and simple code  
+- Use logging module in new code  
+- Avoid global state  
+- Document non-trivial functions  
+- Add minimal tests for new features  
+
+------------------------------------------------------------
+7. Syncing Forks or Clones
+------------------------------------------------------------
+
+To sync local branch with main:
+
+git checkout main  
+git pull  
+git checkout feature/my-feature  
+git rebase main  
+
+------------------------------------------------------------
+8. Contacts
+------------------------------------------------------------
+
+Workflow maintainer: Adrien Salicis  
+Email: adrien.salicis@cieletterre.net

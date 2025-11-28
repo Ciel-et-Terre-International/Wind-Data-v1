@@ -1,58 +1,183 @@
+# ROADMAP – WindDatas (Ciel & Terre International)
 
-# Roadmap – WindDatas v1.1 and beyond
+[← Back to Documentation Index](INDEX.md)
 
-This roadmap outlines planned features, ongoing improvements, and development priorities for upcoming versions of the WindDatas project.
-
----
-
-## General Objectives
-
-- Strengthen the robustness of statistical analyses (return periods, distributions)
-- Expand the range of integrated weather data sources (observed and modeled)
-- Professionalize user experience through well-structured notebooks and consistent outputs
-- Prepare for a potential open-source release
+**File:** <FILENAME>  
+**Version:** v1.x  
+**Last updated:** <DATE>  
+**Maintainer:** Adrien Salicis  
+**Related docs:** See docs/INDEX.md for full documentation index.
 
 ---
 
-## Task Status – Version v1.1
+This document describes the strategic development plan for WindDatas.
+It is structured into four layers:
+- v1.x maintenance
+- v1.x feature improvements
+- v2 large architectural changes
+- long-term research & innovation
 
-| Task                                                                 | Status     | Priority |
-|----------------------------------------------------------------------|------------|----------|
-| Integration of MERRA-2 as a new modeled source                       | ✅ Done     | High     |
-| Generation of statistical distributions (Weibull, Gumbel)            | ✅ Done     | High     |
-| Automatic detection of outliers in wind data                         | ✅ Done     | Medium   |
-| Interactive reports and summaries within the analysis notebooks      | ✅ Done     | Medium   |
-| Cleanup and unification of all notebooks                             | ✅ Done     | Medium   |
-| Comparative multi-site analysis notebook                             | ✅ Done     | Medium   |
-| Unit testing coverage for all `fetcher` modules                      | In progress| Medium   |
-| Command-line interface (CLI) to launch individual modules            | Planned    | Low      |
-| English translation of README and documentation                      | ✅ Done     | Low      |
-| Import/export scripts for integration with SQLite or external DB     | Planned    | Low      |
+-------------------------------------------------------------------------------
+1. Vision
+-------------------------------------------------------------------------------
 
----
+WindDatas aims to become a robust internal tool for:
+- historical wind characterization,
+- building code compliance studies,
+- comparison of modeled and observed datasets,
+- automated report generation.
 
-## Next Version – v1.1.0
+The roadmap prioritizes:
+- reliability,
+- transparency of methodology,
+- reproducibility,
+- scalability for larger country-level analyses,
+- integration with future cloud-based tools.
 
-Goal: deliver a stable version with extended statistical capabilities and broader source coverage.
+-------------------------------------------------------------------------------
+2. Roadmap Summary
+-------------------------------------------------------------------------------
 
-Main Milestones:
-- All major sources integrated and working in parallel
-- Complete automation through `run_winddatas.bat`
-- Word report generation by country
-- Interactive HTML globe showing all sites and selected stations
+v1.0 → DONE  
+Core pipeline, multi-source retrieval, normalisation, stats, report generation.
 
----
+v1.1 → STABILIZATION  
+Bug fixes, documentation, comparisons, better error handling.
 
-## Roadmap Beyond v1.1 (v1.2 → v2.0)
+v1.2 → DATA & PERFORMANCE IMPROVEMENTS  
+Better interpolation, flexible configuration, cleaned API interactions.
 
-| Planned Feature                                                                 | Version | Priority |
-|----------------------------------------------------------------------------------|---------|----------|
-| Improved radar plots combining wind direction, intensity, and frequency         | v1.2    | High     |
-| Dynamic return period comparison with Building Code reference values            | v1.2    | High     |
-| Aggregated statistical summaries per country or region                          | v1.2    | Medium   |
-| Integration of quality/rugosity metadata for stations                           | v1.2    | Medium   |
-| Automatic rugosity (z0) estimation from OSM or raster data                      | v2.0    | Medium   |
-| Dynamic source prioritization strategy per country/region (optional override)   | v2.0    | Low      |
-| Optional PostgreSQL or SQLite database backend for site data                    | v2.0    | Low      |
-| Full public documentation and open-source release (GitHub Pages or similar)     | v2.0    | Low      |
+v1.3 → UI & USABILITY  
+Command-line interface, batch mode, multi-site workflows.
 
+v2.0 → ARCHITECTURAL REVISION  
+Refactor into a modular package with unit tests, plugin-based architecture.
+
+v2.1+ → ADVANCED FEATURES  
+Improved statistical modelling, interactive dashboards, cloud deployment.
+
+-------------------------------------------------------------------------------
+3. v1.x – Maintenance and Short-Term Improvements
+-------------------------------------------------------------------------------
+
+### 3.1 Code Quality and Cleaning
+- Remove unused modules (old NOAA API fetchers, temp files)
+- Improve module-level docstrings
+- Enforce consistent directory naming
+- Switch from print() to logging
+
+### 3.2 Data Normalization Improvements
+- Unified height correction logic
+- Metadata extraction per source
+- Optional roughness-based adjustments
+- Better detection of units & anomalies
+
+### 3.3 Performance Optimizations
+- Speed up merges (chunked reading for large CSVs)
+- Parallel download option (NOAA/Meteostat/ERA5)
+- Cache management for repeated runs
+
+### 3.4 Reliability and Error Handling
+- Graceful fallback when a source fails
+- More robust timestamp alignment
+- Automatic gap detection & reporting
+- Improved NOAA parsing exceptions
+
+### 3.5 User Interface & CLI Improvements
+- Add `--start` and `--end` CLI flags
+- Add `--site` filter
+- Add `--download-only` and `--analysis-only`
+- Add global config file (YAML)
+
+-------------------------------------------------------------------------------
+4. v2.0 – Architectural Evolution
+-------------------------------------------------------------------------------
+
+### 4.1 Packaging and Modularity
+- Convert WindDatas into a proper Python package (`pip install winddatas`)
+- Split pipeline into subpackages:
+  * winddatas.sources
+  * winddatas.stats
+  * winddatas.normalization
+  * winddatas.reporting
+- Plugin-based architecture for new data sources
+- Deprecation of monolithic script.py
+
+### 4.2 Test Coverage & CI
+- Full PyTest coverage
+- Automated tests for:
+  * all fetchers
+  * normalization routines
+  * extreme value fitting
+  * report generation
+- GitHub Actions CI pipeline
+
+### 4.3 Configuration System
+- Site profiles in structured JSON/YAML
+- Unified global settings
+- Auto-validation of input schema via Pydantic or Marshmallow
+
+### 4.4 Data Storage Layer
+- Replace CSV with Parquet for multi-run efficiency
+- Create metadata manifests for reproducibility
+- Optional SQLite or DuckDB backend
+
+-------------------------------------------------------------------------------
+5. v2.1+ – Advanced & Research Features
+-------------------------------------------------------------------------------
+
+### 5.1 Improved Statistical Models
+- Full GEV optimization with confidence intervals
+- Bayesian estimation of extremes
+- Block maxima vs. peaks-over-threshold (POT)
+
+### 5.2 Interactive Visualization
+- Streamlit or Dash integration
+- Wind roses with filtering
+- Temporal zoom and seasonal analyses
+
+### 5.3 Cloud Integration
+- Dedicated server for mass batch processing
+- Remote execution and scheduling
+- Data caching and shared storage
+
+### 5.4 Geospatial Enhancements
+- Terrain-based height corrections
+- Orographic adjustments
+- Distance-based weighting of stations
+
+-------------------------------------------------------------------------------
+6. Dependencies Management
+-------------------------------------------------------------------------------
+
+v1.x:
+- Prioritize reproducibility
+- Pin versions of critical libs (pandas, xarray, windrose)
+- Migrate deprecated APIs (ERA5 CDS tokens, Meteostat updates)
+
+v2.x:
+- Replace deprecated libs
+- Remove technical debt
+- Introduce environment lock files
+
+-------------------------------------------------------------------------------
+7. Release Schedule (Tentative)
+-------------------------------------------------------------------------------
+
+v1.1 – Q1 2025  
+v1.2 – Q2 2025  
+v1.3 – Q3 2025  
+v2.0 – Q4 2025 / Q1 2026
+
+-------------------------------------------------------------------------------
+8. Governance
+-------------------------------------------------------------------------------
+
+Project Lead: Adrien Salicis  
+Contributors: Internal R&D – Ciel & Terre International
+
+All major decisions (architecture, API changes, source additions) must be
+validated by the project lead before integration.
+
+-------------------------------------------------------------------------------
+End of document.
