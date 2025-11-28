@@ -1,40 +1,113 @@
-# WindDatas – Internal Wind Data Tool (Ciel & Terre International)
+# WindDatas – Internal Wind Data Tool
+Ciel & Terre International – R&D
 
-WindDatas is a modular Python tool designed to retrieve, normalize, and analyze historical wind data from multiple observed and modeled sources.  
-It is used at Ciel & Terre International to benchmark wind models, support building code compliance studies, and generate consistent technical reports per site.
+WindDatas is an internal Python tool developed to retrieve, normalize, and analyze historical wind data from multiple meteorological sources (observed and modeled).
+It is used within Ciel & Terre International to support:
+- wind resource assessments
+- building code wind analysis
+- engineering decision-making
+- cross-source wind model comparisons
+- automated wind reporting for site studies
 
-This repository corresponds to the v1 internal version used in production workflows.
-
---------------------------------------------------------------------------------
-## Objectives
---------------------------------------------------------------------------------
-
-WindDatas allows you to:
-
-- Automatically retrieve wind data for multiple sites worldwide
-- Combine:
-  - observed sources (NOAA ISD, Meteostat)
-  - modeled sources (ERA5, NASA POWER, Open-Meteo)
-- Normalize datasets with different:
-  - units (knots, km/h, mph → m/s)
-  - averaging periods (10 min vs hourly vs daily)
-  - timestamps (local time → UTC)
-  - measurement heights (vertical extrapolation when possible)
-- Run full statistical analysis:
-  - descriptive statistics
-  - outlier detection (IQR-based)
-  - Weibull distribution fitting
-  - Gumbel / GEV extreme value fitting
-  - return period estimation (e.g. 50-year wind)
-- Generate per-site outputs:
-  - cleaned CSVs
-  - figures and tables
-  - Word reports
-
-For scientific details, see docs/METHODOLOGY.md and docs/DATAS.md.
+This repository corresponds to WindDatas v1, the stable reference implementation.
 
 --------------------------------------------------------------------------------
-## Repository structure (v1)
+## Overview
+--------------------------------------------------------------------------------
+
+WindDatas automates the full workflow for historical wind analysis:
+1. Site selection
+2. Automatic data retrieval
+3. Normalization of wind datasets
+4. Descriptive and extreme-value statistics
+5. Cross-source comparisons
+6. Report generation
+
+--------------------------------------------------------------------------------
+## Key Features
+--------------------------------------------------------------------------------
+
+### Multi-source wind data acquisition
+Observed sources:
+- NOAA ISD
+- Meteostat
+
+Modeled sources:
+- ERA5
+- NASA POWER
+- Open-Meteo
+
+### Automatic normalization
+- Units converted to m/s
+- Timestamps in UTC
+- Vertical extrapolation when metadata is available
+- Standardized averaging periods
+- Consistent handling of gusts vs mean wind
+
+### Statistical analysis
+- Descriptive statistics
+- Missing-data and completeness assessment
+- Outlier detection
+- Weibull fitting
+- Gumbel and GEV extreme-value fitting
+- 50-year return period wind estimation
+
+### Report generation
+- Figures
+- Tables
+- Word report for each site
+
+--------------------------------------------------------------------------------
+## System Architecture
+--------------------------------------------------------------------------------
+
+Pipeline diagram:
+
+    modele_sites.csv
+            |
+            v
+        script.py
+            |
+    -------------------------------
+    |     |     |      |         |
+   NOAA Meteo  ERA5   NASA   Open-Meteo
+            \     |     |       /
+             \    |     |      /
+              \   |     |     /
+             merged, normalized
+                    |
+            analysis_runner.py
+                    |
+            report_generator.py
+                    |
+    data/<SITE>/report/fiche_<SITE>.docx
+
+--------------------------------------------------------------------------------
+## Data Sources
+--------------------------------------------------------------------------------
+
+NOAA ISD  
+Observed, hourly, long historical records  
+https://www.ncei.noaa.gov/products/integrated-surface-database
+
+Meteostat  
+Observed, hourly, curated  
+https://meteostat.net
+
+ERA5  
+Reanalysis, hourly, global  
+https://cds.climate.copernicus.eu
+
+NASA POWER  
+Daily modeled climatology  
+https://power.larc.nasa.gov
+
+Open-Meteo  
+Hourly modeled wind and gusts  
+https://open-meteo.com
+
+--------------------------------------------------------------------------------
+## Repository Structure
 --------------------------------------------------------------------------------
 
 Wind-Data-v1/
@@ -49,15 +122,14 @@ Wind-Data-v1/
     INDEX.md
     CONTRIBUTING.md
     WORKFLOW.md
-    DATAS.md
     METHODOLOGY.md
+    DATAS.md
     ROADMAP.md
     TODO.md
     SECURITY.md
     LICENSE
 
   modules/
-    __init__.py
     analysis_runner.py
     conversion_manager.py
     era5_fetcher.py
@@ -72,141 +144,101 @@ Wind-Data-v1/
     report_generator.py
     tkinter_ui.py
     utils.py
-    visualcrossing_fetcher.py
 
   scripts/
     clean.py
     clean_output.py
     site_enricher.py
-    test_noaa_fetcher.py
 
   tests/
-    __init__.py
-    test_noaa_api_fetcher.py
-    test_noaa_isd_fetcher.py
-    test_noaa_isd_fetcher_PARIS.py
-    test_noaa_station_finder.py
     test_openmeteo.py
     test_utils.py
 
   data/
-    (generated at runtime, ignored by Git)
-
+    (generated automatically)
 
 --------------------------------------------------------------------------------
 ## Installation
 --------------------------------------------------------------------------------
 
-1. Clone the repository
+Clone the repository:
 
-HTTPS:
-  git clone https://github.com/Ciel-et-Terre-International/Wind-Data-v1.git
-  cd Wind-Data-v1
+    git clone https://github.com/Ciel-et-Terre-International/Wind-Data-v1.git
+    cd Wind-Data-v1
 
-SSH (if configured):
-  git clone git@github.com:Ciel-et-Terre-International/Wind-Data-v1.git
-  cd Wind-Data-v1
+Create the environment:
 
-2. Create and activate the Conda environment
-
-  conda env create -f environment.yml
-  conda activate winddatas
-
-Alternative (not recommended for first installation):
-
-  pip install -r requirements.txt
-
+    conda env create -f environment.yml
+    conda activate winddatas
 
 --------------------------------------------------------------------------------
 ## Usage
 --------------------------------------------------------------------------------
 
-Option A – Windows batch launcher:
+Windows launcher:
 
-  run_winddatas.bat
+    run_winddatas.bat
 
-Option B – Direct Python execution:
+Direct execution:
 
-  conda activate winddatas
-  python script.py
-
-You will be asked to select:
-
-- the start date
-- the end date
-
-Then the tool will:
-
-1. Load the site list from modele_sites.csv
-2. For each site:
-   - select relevant stations (NOAA, Meteostat)
-   - download or reuse existing data for all sources (ERA5, NASA POWER, Open-Meteo, etc.)
-3. Normalize timestamps, units, averaging periods and heights
-4. Compute descriptive statistics, outliers and extreme values
-5. Generate figures, tables and a Word report per site
-
+    conda activate winddatas
+    python script.py
 
 --------------------------------------------------------------------------------
 ## Outputs
 --------------------------------------------------------------------------------
 
-For each site (for example: WUS242_FORT BRAGG), the tool generates under data/<SITE_CODE>_<SITE_NAME>/:
+For each site:
 
-- Raw CSVs per source:
-  - era5_<SITE>.csv
-  - meteostat1_<SITE>.csv, meteostat2_<SITE>.csv
-  - noaa_station1_<SITE>.csv, noaa_station2_<SITE>.csv
-  - openmeteo_<SITE>.csv
-  - nasa_power_<SITE>.csv
-- Processed tables in figures_and_tables/:
-  - descriptive statistics for mean wind and gusts
-  - data quality summary
-  - outlier tables
-  - annual maxima tables
-  - source comparison tables
-- Figures in figures_and_tables/:
-  - histograms (mean wind and gusts)
-  - boxplots and outlier distributions
-  - time series plots
-  - Weibull / Gumbel fitting plots
-  - directional radar / wind rose plots
-- Report in report/:
-  - fiche_<SITE_CODE>_<SITE_NAME>.docx (Word report)
+    data/<SITE>/
+        era5_<SITE>.csv
+        meteostat_<SITE>.csv
+        noaa_station1_<SITE>.csv
+        noaa_station2_<SITE>.csv
+        openmeteo_<SITE>.csv
+        nasa_power_<SITE>.csv
 
+        figures_and_tables/
+            statistical tables
+            outlier tables
+            time series
+            histograms
+            boxplots
+            Weibull and Gumbel fitting plots
+            wind rose
+
+        report/
+            fiche_<SITE>.docx
 
 --------------------------------------------------------------------------------
 ## Documentation
 --------------------------------------------------------------------------------
 
-All documentation is located under docs/. The entry point is:
+All documentation is located under docs/, the entry point is:
 
-  docs/INDEX.md
+    docs/INDEX.md
 
 Main documents:
-
-- INDEX.md       – documentation index and overview
-- METHODOLOGY.md – scientific and methodological details (normalization, statistics, extremes)
-- DATAS.md       – detailed description of all meteorological data sources
-- CONTRIBUTING.md – how to contribute, branching rules, PR workflow
-- WORKFLOW.md    – Git workflow and release process
-- ROADMAP.md     – roadmap for v1.x and v2.x
-- TODO.md        – task list grouped by priority
-- SECURITY.md    – internal security and usage notes
-- LICENSE        – licensing information (MIT)
-
+- METHODOLOGY.md
+- DATAS.md
+- CONTRIBUTING.md
+- WORKFLOW.md
+- ROADMAP.md
+- TODO.md
+- SECURITY.md
+- LICENSE
 
 --------------------------------------------------------------------------------
 ## License
 --------------------------------------------------------------------------------
 
-This project is used internally at Ciel & Terre International and distributed under the MIT License.
-
-See docs/LICENSE for full details.
-
+WindDatas is distributed internally under the MIT License.
+See docs/LICENSE.
 
 --------------------------------------------------------------------------------
 ## Contact
 --------------------------------------------------------------------------------
 
-Project lead and maintainer: Adrien Salicis  
-Email: adrien.salicis@cieletterre.net
+Project lead and maintainer:  
+Adrien Salicis  
+adrien.salicis@cieletterre.net
