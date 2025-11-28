@@ -1,4 +1,4 @@
-# TODO LIST – WindDatas v1
+# TODO LIST – Wind Data v1
 
 [← Back to README](../README.md)
 
@@ -13,7 +13,7 @@
 Ciel & Terre International  
 Operational, Technical and Scientific Tasks
 
-This document contains actionable items for the WindDatas pipeline.
+This document contains actionable items for the Wind Data pipeline.
 Items are grouped by category and priority.
 
 -------------------------------------------------------------------------------

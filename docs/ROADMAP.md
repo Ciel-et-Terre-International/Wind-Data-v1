@@ -1,4 +1,4 @@
-# ROADMAP – WindDatas (Ciel & Terre International)
+# ROADMAP – Wind Data (Ciel & Terre International)
 
 [← Back to README](../README.md)
 
@@ -21,7 +21,7 @@ It is structured into four layers:
 1. Vision
 -------------------------------------------------------------------------------
 
-WindDatas aims to become a robust internal tool for:
+Wind Data aims to become a robust internal tool for:
 - historical wind characterization,
 - building code compliance studies,
 - comparison of modeled and observed datasets,
@@ -94,7 +94,7 @@ Improved statistical modelling, interactive dashboards, cloud deployment.
 -------------------------------------------------------------------------------
 
 ### 4.1 Packaging and Modularity
-- Convert WindDatas into a proper Python package (`pip install winddatas`)
+- Convert Wind Data into a proper Python package (`pip install winddatas`)
 - Split pipeline into subpackages:
   * winddatas.sources
   * winddatas.stats

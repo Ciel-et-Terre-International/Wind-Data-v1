@@ -1,4 +1,4 @@
-# METHODOLOGY – WindDatas v1
+# METHODOLOGY – Wind Data v1
 
 [← Back to README](../README.md)
 
@@ -13,7 +13,7 @@
 Ciel & Terre International  
 Scientific and Technical Documentation
 
-This document describes the scientific and methodological foundations of WindDatas v1.  
+This document describes the scientific and methodological foundations of Wind Data v1.  
 It combines:
 - the characteristics of all meteorological data sources used,
 - the normalization rules applied across datasets,
@@ -24,7 +24,7 @@ It combines:
 1. Introduction
 -------------------------------------------------------------------------------
 
-WindDatas retrieves, processes and analyses historical wind data from multiple
+Wind Data retrieves, processes and analyses historical wind data from multiple
 observed and modeled sources. Because each dataset has different temporal
 resolution, averaging period, reference height and metadata quality, the
 pipeline applies normalization steps before combining or comparing sources.
@@ -39,7 +39,7 @@ Objectives:
 2. Data Sources Overview
 -------------------------------------------------------------------------------
 
-WindDatas integrates multiple independent meteorological sources:
+Wind Data  integrates multiple independent meteorological sources:
 
 Observed sources:
 - NOAA ISD (Integrated Surface Database)
@@ -145,7 +145,7 @@ Limitations:
 3. Data Normalization Strategy
 -------------------------------------------------------------------------------
 
-Different datasets use different conventions. WindDatas harmonizes them
+Different datasets use different conventions. Wind Data harmonizes them
 according to the following rules:
 
 -------------------------------------------------------------------------------
@@ -174,7 +174,7 @@ Rules:
 -------------------------------------------------------------------------------
 
 When the measurement height is known (H1) and differs from the target height (H2 = 10 m),
-WindDatas uses the WMO logarithmic wind profile:
+Wind Data uses the WMO logarithmic wind profile:
 
 U(H2) = U(H1) * (ln(H2 / z0) / ln(H1 / z0))
 
@@ -205,7 +205,7 @@ Gust normalization:
 4. Statistical Framework
 -------------------------------------------------------------------------------
 
-WindDatas computes:
+Wind Data computes:
 
 1. Descriptive statistics  
 2. Data completeness and quality indicators  
@@ -252,7 +252,7 @@ Parameters:
 - k (shape)
 - A (scale)
 
-WindDatas uses:
+Wind Data uses:
 - Maximum-likelihood estimation (MLE)
 - SciPy fitting routines
 
@@ -272,7 +272,7 @@ F(x) = exp(-exp(-(x - μ)/β))
 Return level for T years:
 x_T = μ - β * ln(-ln(1 - 1/T))
 
-WindDatas:
+Wind Data:
 - Fits (μ, β) via MLE
 - Computes 50-year wind for each dataset
 
@@ -300,7 +300,7 @@ Parameters:
 - σ (scale)
 - k (shape)
 
-WindDatas:
+Wind Data:
 - Provides optional GEV fitting
 - Defaults to Gumbel for stability
 
@@ -334,7 +334,7 @@ For each source pair:
 - Open-Meteo definition of gust is model-dependent.
 - Extreme value fits require ≥ 10 AMS points for stability.
 
-WindDatas reports these limitations in logs and documentation.
+Wind Data reports these limitations in logs and documentation.
 
 -------------------------------------------------------------------------------
 7. Summary of the Scientific Pipeline

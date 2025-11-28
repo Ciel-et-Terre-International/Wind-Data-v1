@@ -1,4 +1,4 @@
-# WORKFLOW – Git Workflow for WindDatas (Ciel & Terre International)
+# WORKFLOW – Git Workflow for Wind Data (Ciel & Terre International)
 
 [← Back to README](../README.md)
 
@@ -10,7 +10,7 @@
 
 ---
 
-This document summarizes the Git workflow used for WindDatas v1.
+This document summarizes the Git workflow used for Wind Data v1.
 
 ------------------------------------------------------------
 1. Branch Structure

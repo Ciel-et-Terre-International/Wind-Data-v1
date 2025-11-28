@@ -1,17 +1,17 @@
 
-# WindDatas – Internal Wind Data Tool  
+# Wind Data – Internal Wind Data Tool  
 Ciel & Terre International – R&D
 
-WindDatas is an internal Python tool developed to retrieve, normalize, and analyze historical wind data from multiple meteorological sources (observed and modeled).  
+Wind Data is an internal Python tool developed to retrieve, normalize, and analyze historical wind data from multiple meteorological sources (observed and modeled).  
 It is designed for engineering teams performing wind assessments, building code validations, model benchmarking, and automated reporting.
 
-This repository corresponds to **WindDatas v1**, the stable reference implementation.
+This repository corresponds to **Wind Data v1**, the stable reference implementation.
 
 ---
 
 # Overview
 
-WindDatas automates the full workflow for wind analysis:
+Wind Data automates the full workflow for wind analysis:
 
 1. Site selection  
 2. Multi-source data acquisition  
@@ -31,15 +31,13 @@ You can navigate to any document directly using the links below:
 
 - [METHODOLOGY.md](./docs/METHODOLOGY.md)  
   Scientific framework, normalization rules, and statistical methods.
-
-- [DATAS.md](./docs/DATAS.md)  
+- [DATA.md](./docs/DATA.md)  
   Detailed description of all meteorological data sources.
 
 ### Development & Governance
 
 - [CONTRIBUTING.md](./docs/CONTRIBUTING.md)  
   Rules for contributing, branching, commits, and PR workflow.
-
 - [WORKFLOW.md](./docs/WORKFLOW.md)  
   Git usage guidelines and release flow.
 
@@ -47,7 +45,6 @@ You can navigate to any document directly using the links below:
 
 - [ROADMAP.md](./docs/ROADMAP.md)  
   Strategic plan for v1.x → v2.x evolution.
-
 - [TODO.md](./docs/TODO.md)  
   Technical, scientific, and maintenance tasks grouped by priority.
 
@@ -146,7 +143,7 @@ Wind-Data-v1/
 ├── README.md
 ├── environment.yml
 ├── requirements.txt
-├── run_winddatas.bat
+├── run_winddata.bat
 ├── script.py
 ├── modele_sites.csv
 │
@@ -155,7 +152,7 @@ Wind-Data-v1/
 │   ├── CONTRIBUTING.md
 │   ├── WORKFLOW.md
 │   ├── METHODOLOGY.md
-│   ├── DATAS.md
+│   ├── DATA.md
 │   ├── ROADMAP.md
 │   ├── TODO.md
 │   ├── SECURITY.md
@@ -196,7 +193,7 @@ Wind-Data-v1/
 
 # Data Sources
 
-WindDatas integrates multiple meteorological datasets:
+Wind Data integrates multiple meteorological datasets:
 
 | Source        | Type       | Resolution | Strengths | Limitations |
 |---------------|------------|------------|-----------|-------------|
@@ -206,7 +203,7 @@ WindDatas integrates multiple meteorological datasets:
 | NASA POWER    | Model      | Daily      | Smooth climatology | Not suitable for gust extremes |
 | Open-Meteo    | Model      | Hourly     | Easy API | Model-dependent gusts |
 
-See full technical specification in `docs/DATAS.md`.
+See full technical specification in `docs/DATA.md`.
 
 ---
 
@@ -223,7 +220,7 @@ Create environment:
 
 ```
 conda env create -f environment.yml
-conda activate winddatas
+conda activate winddata
 ```
 
 ---
@@ -233,13 +230,13 @@ conda activate winddatas
 Windows launcher:
 
 ```
-run_winddatas.bat
+run_winddata.bat
 ```
 
 Direct execution:
 
 ```
-conda activate winddatas
+conda activate winddata
 python script.py
 ```
 
@@ -276,7 +273,7 @@ docs/INDEX.md
 Main references include:
 
 - METHODOLOGY.md  
-- DATAS.md  
+- DATA.md  
 - CONTRIBUTING.md  
 - WORKFLOW.md  
 - ROADMAP.md  

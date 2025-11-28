@@ -1,7 +1,7 @@
 
-# DATAS – Meteorological Sources Used in WindDatas
+# DATA – Meteorological Sources Used in Wind Data
 
-This document details all meteorological data sources used in the WindDatas project. It focuses on precise definitions, units, wind averaging durations, and conversion rules applied to ensure consistent and rigorous comparisons between sources.
+This document details all meteorological data sources used in the Wind Data project. It focuses on precise definitions, units, wind averaging durations, and conversion rules applied to ensure consistent and rigorous comparisons between sources.
 
 ---
 
@@ -189,7 +189,7 @@ df = df.rename(columns={
 | `GUST`    | Max 5-second gust (if available)     | `25.1`               |
 | `DRCT`    | Wind direction (alternative field)   | `270`                |
 
-#### Typical Variables Extracted for WindDatas
+#### Typical Variables Extracted for Wind Data
 
 | Variable         | Description                           | Unit  |
 |------------------|---------------------------------------|--------|
@@ -253,7 +253,7 @@ df_daily = df.groupby('date').agg({
 - Provided by the **Open-Meteo API**, which aggregates several public datasets.
 - These are **not observations**, but **interpolated forecasts or reanalyses**.
 
-Raw Open-Meteo data is retrieved in km/h and converted to m/s (1 m/s = 3.6 km/h) within WindDatas for consistency.
+Raw Open-Meteo data is retrieved in km/h and converted to m/s (1 m/s = 3.6 km/h) within Wind Data for consistency.
 
 #### Models Used
 Depending on the variable, hour, and location, Open-Meteo uses:
@@ -355,12 +355,12 @@ df = pd.merge(df_daily, df_dir, on="time", how="left")
   `windspeed = sqrt(u² + v²)`
 - These values represent a **spatial average over a 31 km grid cell**.
 
-WindDatas uses ERA5 Single Levels Timeseries via CDSAPI because it delivers clean CSV files ready for automated processing.
+Wind Data uses ERA5 Single Levels Timeseries via CDSAPI because it delivers clean CSV files ready for automated processing.
 
 **Advantages:**
 - Fast and easy download
 - No need for GRIB/NetCDF parsing
-- Fully compatible with WindDatas automation
+- Fully compatible with Wind Data automation
 
 **Known Limitation:**  
 This product **does not provide wind gusts** (`10m_wind_gust_since_previous_post_processing` is not available here).
@@ -370,7 +370,7 @@ Gusts are only available in:
 - ERA5-Land hourly (GRIB/NetCDF)
 
 **Strategic Choice:**  
-WindDatas prioritizes CSV-based automation and consistency, even if that means omitting ERA5 gusts for now.  
+Wind Data prioritizes CSV-based automation and consistency, even if that means omitting ERA5 gusts for now.  
 This trade-off is documented and assumed for full transparency.
 
 #### Wind Direction
@@ -526,16 +526,16 @@ Wind measurements (observed or modeled) depend on:
 - Use CORINE Land Cover, Copernicus, SRTM rasters to estimate land use
 - Automatic roughness classification may be possible in the future via GIS/API
 
-#### 3. Qualitative Score in WindDatas
-- WindDatas allows assigning an **exposure score from 1 to 5**:
+#### 3. Qualitative Score in Wind Data
+- Wind Data allows assigning an **exposure score from 1 to 5**:
   - 5 = very exposed (plateau, coast)
   - 1 = very sheltered (valley, forest, city center)
 
 ---
 
-### Integration in WindDatas
+### Integration in Wind Data
 
-For each station (Meteostat, NOAA, etc.), WindDatas stores:
+For each station (Meteostat, NOAA, etc.), Wind Data stores:
 - **Measurement height** (default: 10 m if unknown)
 - **Distance to the site** (in km)
 - **Estimated terrain type / roughness**
