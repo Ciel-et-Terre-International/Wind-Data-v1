@@ -63,24 +63,38 @@ Modeled sources:
 
 Pipeline diagram:
 
-    modele_sites.csv
-            |
-            v
-        script.py
-            |
-    -------------------------------
-    |     |     |      |         |
-   NOAA Meteo  ERA5   NASA   Open-Meteo
-            \     |     |       /
-             \    |     |      /
-              \   |     |     /
-             merged, normalized
-                    |
-            analysis_runner.py
-                    |
-            report_generator.py
-                    |
-    data/<SITE>/report/fiche_<SITE>.docx
+               +---------------------+
+               |   modele_sites.csv  |
+               +----------+----------+
+                          |
+                          v
+                    +-----+-----+
+                    | script.py |
+                    +-----+-----+
+                          |
+     -------------------------------------------------
+     |            |             |            |        |
+     v            v             v            v        v
+  NOAA ISD    Meteostat       ERA5      NASA POWER  Open-Meteo
+ (observed)  (observed)     (model)      (model)     (model)
+     \            |             |            |          /
+      \           |             |            |         /
+       \          |             |            |        /
+        +---------+-------------+------------+-------+
+                          |
+                          v
+                +---------+-----------+
+                |  analysis_runner.py |
+                +---------+-----------+
+                          |
+                          v
+                +---------+-----------+
+                | report_generator.py |
+                +---------+-----------+
+                          |
+                          v
+          data/<SITE>/report/fiche_<SITE>.docx
+
 
 --------------------------------------------------------------------------------
 ## Data Sources
@@ -111,51 +125,54 @@ https://open-meteo.com
 --------------------------------------------------------------------------------
 
 Wind-Data-v1/
-  README.md
-  environment.yml
-  requirements.txt
-  run_winddatas.bat
-  script.py
-  modele_sites.csv
+│
+├── README.md
+├── environment.yml
+├── requirements.txt
+├── run_winddatas.bat
+├── script.py
+├── modele_sites.csv
+│
+├── docs/
+│   ├── INDEX.md
+│   ├── CONTRIBUTING.md
+│   ├── WORKFLOW.md
+│   ├── METHODOLOGY.md
+│   ├── DATAS.md
+│   ├── ROADMAP.md
+│   ├── TODO.md
+│   ├── SECURITY.md
+│   └── LICENSE
+│
+├── modules/
+│   ├── analysis_runner.py
+│   ├── conversion_manager.py
+│   ├── era5_fetcher.py
+│   ├── meteostat_fetcher.py
+│   ├── nasa_power_fetcher.py
+│   ├── openmeteo_fetcher.py
+│   ├── noaa_isd_fetcher.py
+│   ├── noaa_station_finder.py
+│   ├── stats_calculator.py
+│   ├── source_manager.py
+│   ├── station_profiler.py
+│   ├── report_generator.py
+│   ├── tkinter_ui.py
+│   ├── utils.py
+│   └── visualcrossing_fetcher.py
+│
+├── scripts/
+│   ├── clean.py
+│   ├── clean_output.py
+│   └── site_enricher.py
+│
+├── tests/
+│   ├── test_openmeteo.py
+│   └── test_utils.py
+│
+└── data/
+    (generated automatically, ignored by Git)
 
-  docs/
-    INDEX.md
-    CONTRIBUTING.md
-    WORKFLOW.md
-    METHODOLOGY.md
-    DATAS.md
-    ROADMAP.md
-    TODO.md
-    SECURITY.md
-    LICENSE
-
-  modules/
-    analysis_runner.py
-    conversion_manager.py
-    era5_fetcher.py
-    meteostat_fetcher.py
-    nasa_power_fetcher.py
-    openmeteo_fetcher.py
-    noaa_isd_fetcher.py
-    noaa_station_finder.py
-    stats_calculator.py
-    source_manager.py
-    station_profiler.py
-    report_generator.py
-    tkinter_ui.py
-    utils.py
-
-  scripts/
-    clean.py
-    clean_output.py
-    site_enricher.py
-
-  tests/
-    test_openmeteo.py
-    test_utils.py
-
-  data/
-    (generated automatically)
 
 --------------------------------------------------------------------------------
 ## Installation
