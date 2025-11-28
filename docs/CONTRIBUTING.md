@@ -1,4 +1,4 @@
-# CONTRIBUTING – Ciel & Terre International – WindDatas v1
+# CONTRIBUTING – Ciel & Terre International – Wind Data v1
 
 [← Back to README](../README.md)
 
