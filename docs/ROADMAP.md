@@ -2,20 +2,13 @@
 
 [← Back to README](../README.md)
 
-**File:** <FILENAME>  
-**Version:** v1.x  
-**Last updated:** <DATE>  
+**File:** ROADMAP  
+**Last updated:** 01/12/2025  
 **Maintainer:** Adrien Salicis  
-**Related docs:** See docs/INDEX.md for full documentation index.
 
 ---
 
-This document describes the strategic development plan for Wind Data.
-It is structured into four layers:
-- v1.x maintenance
-- v1.x feature improvements
-- v2 large architectural changes
-- long-term research & innovation
+This document describes the strategic development plan for Wind Data.  
 
 -------------------------------------------------------------------------------
 1. Vision
@@ -159,15 +152,6 @@ v2.x:
 - Replace deprecated libs
 - Remove technical debt
 - Introduce environment lock files
-
--------------------------------------------------------------------------------
-7. Release Schedule (Tentative)
--------------------------------------------------------------------------------
-
-v1.1 – Q1 2025  
-v1.2 – Q2 2025  
-v1.3 – Q3 2025  
-v2.0 – Q4 2025 / Q1 2026
 
 -------------------------------------------------------------------------------
 8. Governance

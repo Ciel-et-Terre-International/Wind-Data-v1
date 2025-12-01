@@ -2,11 +2,9 @@
 
 [← Back to README](../README.md)
 
-**File:** <FILENAME>  
-**Version:** v1.x  
-**Last updated:** <DATE>  
+**File:** TODO  
+**Last updated:** 01/12/2025  
 **Maintainer:** Adrien Salicis  
-**Related docs:** See docs/INDEX.md for full documentation index.
 
 ---
 
@@ -21,14 +19,13 @@ Items are grouped by category and priority.
 -------------------------------------------------------------------------------
 
 ### 1.1 Pipeline Stability
-- Fix building code “NaN” thresholds handling
 - Improve source fallback (avoid pipeline crash)
 - Add missing exception handling for NOAA parsing
 - Ensure timestamp alignment for all sources
 - Standardize column names across CSVs
 
 ### 1.2 Documentation
-- Finalize README.md
+- Finalize README.md (done)
 - Add METHODOLOGY.md (done)
 - Clean DATAS.md (optional)
 - Update CONTRIBUTING and WORKFLOW (done)
@@ -38,7 +35,7 @@ Items are grouped by category and priority.
   --start YYYY-MM-DD
   --end YYYY-MM-DD
   --site <SITE_CODE>
-- Add `--download-only` and `--analysis-only`
+- Add `--download-only` and `--analysis-only` (optional)
 
 -------------------------------------------------------------------------------
 2. Medium Priority (v1.2)

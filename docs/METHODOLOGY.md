@@ -2,11 +2,9 @@
 
 [← Back to README](../README.md)
 
-**File:** <FILENAME>  
-**Version:** v1.x  
-**Last updated:** <DATE>  
+**File:** METHODOLOGY  
+**Last updated:** 01/12/2025  
 **Maintainer:** Adrien Salicis  
-**Related docs:** See docs/INDEX.md for full documentation index.
 
 ---
 

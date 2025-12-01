@@ -2,11 +2,9 @@
 
 [← Back to README](../README.md)
 
-**File:** <FILENAME>  
-**Version:** v1.x  
+**File:** WORKFLOW  
 **Last updated:** <DATE>  
 **Maintainer:** Adrien Salicis  
-**Related docs:** See docs/INDEX.md for full documentation index.
 
 ---
 

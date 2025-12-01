@@ -2,11 +2,9 @@
 
 [← Back to README](../README.md)
 
-**File:** <FILENAME>  
-**Version:** v1.x  
-**Last updated:** <DATE>  
+**File:** CONTRIBUTING  
+**Last updated:** 01/12/2025  
 **Maintainer:** Adrien Salicis  
-**Related docs:** See docs/INDEX.md for full documentation index.
 
 ---
 
@@ -23,6 +21,7 @@ Before contributing, ensure you have:
 
 - Python 3.10+  
 - Conda (Miniconda or Anaconda)  
+- Visual Studio Code
 - A working environment created via `environment.yml`  
 - Git installed and configured with your username and email  
 - Access to the organization repository:
@@ -179,4 +178,4 @@ Steps for a release:
 ------------------------------------------------------------
 
 For major changes, discuss with:
-adrien.salicis@cieletterre.net
+asalicis@cieletterre.net
