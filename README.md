@@ -145,7 +145,7 @@ Wind-Data-v1/
 ├── requirements.txt
 ├── wind_data.bat
 ├── script.py
-├── modele_sites.csv
+├── modele_sites.csv   # needs to be filled by user
 │
 ├── docs/
 │   ├── INDEX.md
@@ -203,37 +203,74 @@ Wind Data integrates multiple meteorological datasets:
 | NASA POWER    | Model      | Daily      | Smooth climatology | Not suitable for gust extremes |
 | Open-Meteo    | Model      | Hourly     | Easy API | Model-dependent gusts |
 
-See full technical specification in `docs/DATA.md`.
+See full technical specification in - [DATA.md](./docs/DATA.md).
 
 ---
 
 # Installation
 
-Clone the repository:
+
+The project is located on the SharePoint
+`[Lien](https://cielterre.sharepoint.com/:f:/s/RD-Ressources/EsJXg3QcLeVBi4HyLlOAcQcBdlN-OUI6me08iRINvX17Dg?e=HzSON8)`
+There is also a GitHub, to see all documentation about and have better interface.
+`[GitHub Wind Data](https://github.com/Ciel-et-Terre-International/Wind-Data-v1)`
+
+
+**REQUIREMENTS**
+
+- Need to install Conda
+[Anaconda](https://www.anaconda.com/download)
+Miniconda is a free, miniature installation of Anaconda Distribution that includes only conda, Python, the packages they both depend on, and a small number of other useful packages. If you need more packages, use the `conda install` command to install from thousands of packages available by default in Anaconda’s public repo, or from other channels, like conda-forge or bioconda.
+**!! Careful, add conda to PATH during the installation !!**
+
+- Need to install VS Code
+[Visual Studio Code](https://code.visualstudio.com/)
+After installation, you'll have to set the **command prompt as the default terminal**.
+Then, you can open directly the project from the SharePoint (Syncing)
+
+- Need to download the .cdsapirc file for ERA5
+[.cdsapirc](https://cielterre.sharepoint.com/:u:/s/RD-Ressources/EWLk54v_WV1Ek66YAr1vQR4BD9u6Kqv1d54DQ9U0SR-4Ug?e=6xAa3G)
+It has to be located at : C:\Users\%USER%
+Example : C:\Users\AdrienSALICIS
+
+[Optional]
+You can clone the repository (or download it from SharePoint) to your local, for example, on your desktop. Performance can be optimised when the files are not located on the network.
 
 ```
 git clone https://github.com/Ciel-et-Terre-International/Wind-Data-v1.git
 cd Wind-Data-v1
 ```
 
-Create environment:
+**Before running the tool, you must install dependencies and packages.**
+This has to be done with Conda (Anaconda or Miniconda, doesn't matter).
+A virtual environnement has to be created, and the environment.yml files described its characteristics.
+Command to create the environment:
 
 ```
 conda env create -f environment.yml
 conda activate wind_data
 ```
 
+[Optional] 
+This can be done with a "pip" installation, but conda is a cleanest way.
+
 ---
 
 # Usage
 
-Windows launcher:
+On VS Code, open a new terminal (need to be Command Prompt) :
 
+1.
 ```
+conda activate wind_data
+```
+2.
+````
 wind_data.bat
 ```
+3. Fill the dates for your study
 
-Direct execution:
+Direct execution (not recommended) :
 
 ```
 conda activate wind_data
@@ -259,31 +296,6 @@ data/<SITE>/
     report/
         fiche_<SITE>.docx
 ```
-
----
-
-# Documentation
-
-All documents are in:
-
-```
-docs/INDEX.md
-```
-
-Main references include:
-
-- METHODOLOGY.md  
-- DATA.md  
-- CONTRIBUTING.md  
-- WORKFLOW.md  
-- ROADMAP.md  
-- TODO.md  
-
----
-
-# License
-
-MIT License (see `docs/LICENSE`).
 
 ---
 
