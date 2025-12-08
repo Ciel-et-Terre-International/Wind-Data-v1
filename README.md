@@ -236,8 +236,8 @@ See full technical specification in [DATA.md](./docs/DATA.md).
 
 # Installation
 
-This project is hosted internally (SharePoint) and on GitHub. 
-Recommended : Synchronize the folder on your computer, install yhe following softwares and dependencies and open the synced folder with VS CODE.
+This project is hosted internally (SharePoint) and on GitHub.  
+Recommended : Synchronize the folder on your computer, install yhe following softwares and dependencies and open the synced folder with VS CODE.  
 Then you will be in a good environment to run the tool or work on it.  
 
 Internal SharePoint starting point (to be synced):  
@@ -338,7 +338,7 @@ At project root:
 visualisation_plotly.html   # interactive global map of sites and stations
 ```
 
-- If the environment variable `MAPBOX_TOKEN` is set, the map uses a **satellite** basemap (Mapbox). 
+- If the environment variable `MAPBOX_TOKEN` is set, the map uses a **satellite** basemap (Mapbox).  
 `MAPBOX_TOKEN : pk.eyJ1IjoiYXNhbGljaXMiLCJhIjoiY21pd3lyZW95MDE1NzNmcXV3MW9xZTVyMCJ9.ycIrvPH-dCKyWBztK653Fg`
 - Otherwise, a built-in **Natural Earth** basemap is used (no external token required).
 
@@ -348,5 +348,6 @@ visualisation_plotly.html   # interactive global map of sites and stations
 
 Project lead: Adrien Salicis  
 Email: adrien.salicis@cieletterre.net
+
 
 
