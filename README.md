@@ -1,11 +1,10 @@
-
 # Wind Data – Internal Wind Data Tool  
 Ciel & Terre International – R&D
 
 Wind Data is an internal Python tool developed to retrieve, normalize, and analyze historical wind data from multiple meteorological sources (observed and modeled).  
 It is designed for engineering teams performing wind assessments, building code validations, model benchmarking, and automated reporting.
 
-This repository corresponds to **Wind Data v1**, the stable reference implementation.
+This repository corresponds to **Wind Data v1 (branch `v1-audit`)**, the stable reference implementation used in production.
 
 ---
 
@@ -17,7 +16,7 @@ Wind Data automates the full workflow for wind analysis:
 2. Multi-source data acquisition  
 3. Standardization and normalization  
 4. Descriptive and extreme-value statistics  
-5. Cross-source comparisons  
+5. Cross-source comparisons (optional / WIP)  
 6. Automated report generation  
 
 ---
@@ -57,18 +56,55 @@ You can navigate to any document directly using the links below:
 
 # Key Features
 
-- Multi-source historical wind retrieval  
-- Automatic preprocessing (UTC, units, heights, resampling)  
-- Weibull, Gumbel, and GEV extreme-value modeling  
-- Outlier detection and data quality metrics  
-- Automated Word report generation  
-- Modular Python architecture  
+- Multi-source historical wind retrieval (NOAA ISD, Meteostat, ERA5, NASA POWER, Open-Meteo)  
+- Automatic preprocessing:
+  - UTC timestamps
+  - standard units (m/s)
+  - 10 m reference height
+  - daily aggregation
+- **Standardized daily maxima** for mechanical design:
+  - `windspeed_mean` = daily maximum of mean wind at 10 m  
+  - `windspeed_gust` = daily maximum of gust at 10 m (or fallback via gust factor)
+- Data quality assessment (coverage, gaps, station distance, etc.)  
+- Extreme values (Gumbel) and configurable return periods (50 y, 100 y, 200 y, …)  
+- Automated Word report generation (per site)  
+- Interactive global visualization of sites and stations (Plotly, optional Mapbox satellite basemap)  
+
+---
+
+# Standardized Data Model (v1-audit)
+
+All sources are normalized to a common daily data model before analysis.
+
+For each source / station, the main CSVs exposed to the statistics engine (`modules/analysis_runner.py`) contain at least:
+
+- `time` (datetime, UTC, daily)
+- `windspeed_mean` (m/s)  
+  Daily **maximum** of mean wind speed at 10 m.
+- `windspeed_daily_avg` (m/s)  
+  Daily average of mean wind speed at 10 m (informative).
+- `windspeed_gust` (m/s)  
+  Daily **maximum** of gust at 10 m.  
+  If the source does not provide gusts, an optional **gust factor** can be applied to `windspeed_mean` to build a fallback.
+- `wind_direction` (degrees, 0–360)  
+  Daily mean wind direction computed as a **vector average**.
+- `n_hours`  
+  Number of hourly observations contributing to the daily aggregate.
+- `source`  
+  Source identifier (`noaa_station1`, `meteostat2`, `openmeteo`, `nasa_power`, `era5`, …).
+- Station metadata (when applicable):
+  - `station_id`, `station_name`
+  - `station_latitude`, `station_longitude`
+  - `station_distance_km`, `station_elevation`
+  - `timezone`
+
+All internal statistics (histograms, extremes, Gumbel, roses, etc.) are computed on these **daily maxima**.
 
 ---
 
 # System Architecture
 
-Below is the **full pipeline diagram**, using detailed ASCII boxes and flows.
+High-level pipeline diagram:
 
 ```
                +---------------------+
@@ -83,7 +119,7 @@ Below is the **full pipeline diagram**, using detailed ASCII boxes and flows.
                           |
                           v
              +------------+-------------+
-             |   Source Manager         |
+             |        Source Manager    |
              +------------+-------------+
                           |
       -----------------------------------------------------
@@ -104,7 +140,7 @@ Below is the **full pipeline diagram**, using detailed ASCII boxes and flows.
               | - timestamps (UTC)     |
               | - units (m/s)          |
               | - height correction    |
-              | - averaging periods    |
+              | - daily maxima (10 m)  |
               +-----------+-------------+
                           |
                           v
@@ -114,12 +150,10 @@ Below is the **full pipeline diagram**, using detailed ASCII boxes and flows.
                  +--------+--------+
                           |
                           v
-          +---------------+----------------+
-          | Extreme Value Module (EVT)     |
-          | - Weibull                      |
-          | - Gumbel                       |
-          | - GEV                          |
-          +---------------+----------------+
+        +-----------------+------------------+
+        |   Gumbel Return Levels Module      |
+        |   - configurable return periods    |
+        +-----------------+------------------+
                           |
                           v
               +-----------+-----------+
@@ -135,17 +169,17 @@ Below is the **full pipeline diagram**, using detailed ASCII boxes and flows.
 
 # Repository Structure
 
-A clean, GitHub-friendly hierarchical layout:
+Simplified project layout:
 
 ```
-Wind-Data-v1/
+Wind-Data/
 │
 ├── README.md
 ├── environment.yml
 ├── requirements.txt
 ├── wind_data.bat
 ├── script.py
-├── modele_sites.csv   # needs to be filled by user
+├── modele_sites.csv       # to be filled by user
 │
 ├── docs/
 │   ├── INDEX.md
@@ -159,31 +193,24 @@ Wind-Data-v1/
 │   └── LICENSE
 │
 ├── modules/
-│   ├── analysis_runner.py
-│   ├── conversion_manager.py
-│   ├── era5_fetcher.py
-│   ├── meteostat_fetcher.py
-│   ├── nasa_power_fetcher.py
-│   ├── openmeteo_fetcher.py
-│   ├── noaa_isd_fetcher.py
-│   ├── noaa_station_finder.py
-│   ├── stats_calculator.py
-│   ├── source_manager.py
-│   ├── station_profiler.py
-│   ├── report_generator.py
-│   ├── tkinter_ui.py
+│   ├── analysis_runner.py        # statistics, extremes, plots
+│   ├── era5_fetcher.py           # ERA5 hourly + daily aggregation
+│   ├── meteostat_fetcher.py      # Meteostat hourly → daily maxima
+│   ├── nasa_power_fetcher.py     # NASA POWER daily
+│   ├── openmeteo_fetcher.py      # Open-Meteo hourly → daily maxima
+│   ├── noaa_isd_fetcher.py       # NOAA ISD hourly → daily maxima
+│   ├── noaa_station_finder.py    # nearest NOAA stations search
+│   ├── source_manager.py         # orchestrates all fetchers
+│   ├── station_profiler.py       # stations context per site
+│   ├── report_generator.py       # Word report per site
+│   ├── globe_visualizer.py       # Plotly / Mapbox global map
 │   ├── utils.py
-│   └── visualcrossing_fetcher.py
+│   └── 0ld/                      # legacy/unused modules (v1 history)
 │
 ├── scripts/
 │   ├── clean.py
 │   ├── clean_output.py
 │   └── site_enricher.py
-│
-├── tests/
-│   ├── test_openmeteo.py
-│   ├── test_utils.py
-│   └── ...
 │
 └── data/
     (generated automatically, ignored by Git)
@@ -195,118 +222,127 @@ Wind-Data-v1/
 
 Wind Data integrates multiple meteorological datasets:
 
-| Source        | Type       | Resolution | Strengths | Limitations |
-|---------------|------------|------------|-----------|-------------|
-| NOAA ISD      | Observed   | Hourly     | High credibility | Metadata inconsistencies |
-| Meteostat     | Observed   | Hourly     | Cleaned NOAA | May inherit gaps |
-| ERA5          | Model      | Hourly     | No gaps, global | Underestimates extremes |
-| NASA POWER    | Model      | Daily      | Smooth climatology | Not suitable for gust extremes |
-| Open-Meteo    | Model      | Hourly     | Easy API | Model-dependent gusts |
+| Source        | Type       | Native res. | Used res. in v1-audit | Strengths                 | Limitations / Notes                        |
+|---------------|------------|-------------|------------------------|--------------------------|-------------------------------------------|
+| NOAA ISD      | Observed   | Hourly      | Daily maxima           | High credibility         | Gaps, metadata inconsistencies            |
+| Meteostat     | Observed   | Hourly      | Daily maxima           | Station network          | Inherits gaps from underlying datasets    |
+| ERA5          | Model      | Hourly      | Daily maxima (10 m)    | No gaps, global          | Can underestimate extremes                |
+| NASA POWER    | Model      | Daily       | Daily values (10 m)    | Smooth climatology       | Not designed for gust extremes alone      |
+| Open-Meteo    | Model      | Hourly      | Daily maxima           | Easy API                 | Model-dependent gust parametrization      |
 
-See full technical specification in - [DATA.md](./docs/DATA.md).
+See full technical specification in [DATA.md](./docs/DATA.md).
 
 ---
 
 # Installation
 
+This project is hosted internally (SharePoint) and on GitHub.
 
-The project is located on the SharePoint  
+Internal SharePoint starting point:  
 [Lien](https://cielterre.sharepoint.com/:f:/s/RD-Ressources/EsJXg3QcLeVBi4HyLlOAcQcBdlN-OUI6me08iRINvX17Dg?e=HzSON8)  
-There is also a GitHub, to see all documentation about and have better interface.  
-[GitHub Wind Data](https://github.com/Ciel-et-Terre-International/Wind-Data-v1)
 
+GitHub repository:  
+<https://github.com/Ciel-et-Terre-International/rd-wind-data>
 
-**REQUIREMENTS**
+### Requirements
 
-- Need to install Conda  
-[Anaconda](https://www.anaconda.com/download)  
-Miniconda is a free, miniature installation of Anaconda Distribution that includes only conda, Python, the packages they both depend on, and a small number of other useful packages. If you need more packages, use the `conda install` command to install from thousands of packages available by default in Anaconda’s public repo, or from other channels, like conda-forge or bioconda.  
-**!! Careful, add conda to PATH during the installation !!**  
+- **Conda (Anaconda or Miniconda)**  
+  Download and install: <https://www.anaconda.com/download>  
+  During installation, allow Conda to be added to `PATH`.
 
-- Need to install VS Code  
-[Visual Studio Code](https://code.visualstudio.com/)  
-After installation, you'll have to set the **command prompt as the default terminal**.  
-Then, you can open directly the project from the SharePoint (Syncing)  
+- **Visual Studio Code**  
+  <https://code.visualstudio.com/>  
+  Set the **Command Prompt** as default terminal and open the project folder.
 
-- Need to download the .cdsapirc file for ERA5  
-[.cdsapirc](https://cielterre.sharepoint.com/:u:/s/RD-Ressources/EWLk54v_WV1Ek66YAr1vQR4BD9u6Kqv1d54DQ9U0SR-4Ug?e=6xAa3G)  
-It has to be located at : C:\Users\%USER%  
-Example : C:\Users\AdrienSALICIS  
-
-
-
-**[Optional]**
-You can clone the repository (or download it from SharePoint) to your local, for example, on your desktop. Performance can be optimised when the files are not located on the network.  
-
-```
-git clone https://github.com/Ciel-et-Terre-International/Wind-Data-v1.git  
-cd Wind-Data-v1  
-```
-
-
-**Before running the tool, you must install dependencies and packages.**  
- 
-This has to be done with Conda (Anaconda or Miniconda, doesn't matter).  
-A virtual environnement has to be created, and the environment.yml files described its characteristics.  
-Command to create the environment:  
-
-```
-conda env create -f environment.yml  
-conda activate wind_data  
-```
+- **ERA5 credentials (`.cdsapirc`)**  
+  Download from SharePoint and place it in:  
+  `C:\Users\%USERNAME%\.cdsapirc`
 
 [Optional]  
-This can be done with a "pip" installation, but conda is a cleanest way.  
+Clone the GitHub repository:
+
+```bash
+git clone https://github.com/Ciel-et-Terre-International/rd-wind-data.git
+cd rd-wind-data
+git checkout v1-audit
+```
+
+### Create the Conda environment
+
+```bash
+conda env create -f environment.yml
+```
+
+Then:
+
+```bash
+conda activate wind_data
+```
 
 ---
 
-# Usage  
+# Usage
 
-On VS Code, open a new terminal (need to be Command Prompt) :  
+From VS Code (Command Prompt terminal) or a regular CMD:
 
-1.  
-```  
-conda activate wind_data  
-```
-2.  
-```
-wind_data.bat  
-```
-3.  
-```
-Fill the dates for your study  
+```bash
+conda activate wind_data
+wind_data.bat
 ```
 
-Direct execution (not recommended) :  
+Follow the prompts:
 
-```
+1. Confirm you want to run `script.py`.  
+2. Enter **start** and **end** dates for the study period.  
+3. The tool will:
+   - fetch data for each site in `modele_sites.csv`,
+   - normalize and analyze all sources (daily maxima),
+   - generate the Word report and visualisation HTML.
+
+Direct execution (not recommended):
+
+```bash
 conda activate wind_data
 python script.py
 ```
 
 ---
 
-# Outputs  
+# Outputs
 
-Each site produces:  
+For each site (e.g. `WUS242_FORT BRAGG`), the tool generates:
 
-```
+```text
 data/<SITE>/
-    raw CSV files per source
+    <source>_<SITE>.csv               # per-source daily data
+    era5_daily_<SITE>.csv             # ERA5 daily maxima
     figures_and_tables/
-        descriptive stats
-        outliers
-        histograms
-        time series
-        Weibull/Gumbel plots
-        wind roses
+        stats_windspeed_mean.csv
+        resume_qualite.csv
+        histograms, boxplots, outliers
+        time_series_windspeed_*.png
+        rose_max_windspeed_*.png
+        rose_frequency_*.png
+        vent_moyen_extremes_*.csv
+        rafales_extremes_*.csv
+        return_periods_gumbel.csv
+        return_period_50y.csv
     report/
         fiche_<SITE>.docx
 ```
 
+At project root:
+
+```text
+visualisation_plotly.html   # interactive global map of sites and stations
+```
+
+- If the environment variable `MAPBOX_TOKEN` is set, the map uses a **satellite** basemap (Mapbox).  
+- Otherwise, a built-in **Natural Earth** basemap is used (no external token required).
+
 ---
 
-# Contact  
+# Contact
 
 Project lead: Adrien Salicis  
 Email: adrien.salicis@cieletterre.net

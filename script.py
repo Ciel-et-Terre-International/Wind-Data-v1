@@ -18,7 +18,6 @@ from modules.noaa_isd_fetcher import fetch_isd_series
 #from modules.meteo_france_fetcher import fetch_meteo_france_data
 
 from modules.globe_visualizer import visualize_sites_plotly
-from modules.globe_visualizer_pydeck import visualize_sites_pydeck
 
 from modules.analysis_runner import run_analysis_for_site
 from modules.report_generator import generate_report
@@ -234,7 +233,6 @@ def main():
         all_sites_data.append(site_data)
 
     visualize_sites_plotly(all_sites_data, "visualisation_plotly.html")
-    visualize_sites_pydeck(all_sites_data, "visualisation_pydeck.html")
 
     #generate_station_csv(all_sites_data)
     #generate_station_docx(all_sites_data)
