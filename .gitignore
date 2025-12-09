@@ -1,5 +1,7 @@
-# Fichiers � ignorer par Git 
-# Dossiers et fichiers temporaires
+# Ignored files and directories
+# Byte-compiled / optimized / DLL files
+# Python cache files
+
 __pycache__/
 *.pyc
 *.ipynb_checkpoints

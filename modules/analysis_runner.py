@@ -1,12 +1,12 @@
 # ============================================================
 # analysis_runner.py
-# Analyse complète des données météo pour un site (v1-audit)
+# Complete weather data analysis for one site (v1-audit)
 #
-# Hypothèses clés (pipeline v1-audit) :
-# - Tous les fetchers produisent des séries JOURNALIÈRES.
-# - "windspeed_mean" = vitesse maximale journalière du vent moyen à 10 m (m/s).
-# - "windspeed_gust" = vitesse maximale journalière des rafales (m/s) quand disponible.
-# - Les données sont en UTC.
+# Key assumptions (v1-audit pipeline):
+# - All fetchers produce DAILY series.
+# - "windspeed_mean" = daily max of mean wind at 10 m (m/s).
+# - "windspeed_gust" = daily max of gust (m/s) when available.
+# - All data are in UTC.
 # ============================================================
 
 import os
@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import gumbel_r
 
-# Style global sobre
+# Global plotting style
 plt.rcParams["figure.dpi"] = 120
 plt.rcParams["axes.grid"] = True
 plt.rcParams["grid.alpha"] = 0.3
@@ -29,8 +29,7 @@ sns.set_style("whitegrid")
 
 def _get_config_float(site_config, key, default):
     """
-    Récupère une valeur float dans site_config en gérant les NaN / chaînes vides.
-    Si la valeur est absente ou non numérique, retourne default.
+    Safely fetch a float from site_config, falling back to default on empty/NaN.
     """
     val = site_config.get(key, default)
     try:
@@ -43,7 +42,7 @@ def _get_config_float(site_config, key, default):
         return default
 
 # ============================================================
-# 0. Fonction générique : niveaux de retour (Gumbel)
+# 0. Generic function: return levels (Gumbel)
 # ============================================================
 
 def compute_return_level(
@@ -52,51 +51,35 @@ def compute_return_level(
     min_years: int = 10,
 ) -> Optional[float]:
     """
-    Calcule un niveau de retour pour une période donnée à partir d'une série
-    de maxima journaliers (m/s) en s'appuyant sur une loi de Gumbel.
-
-    Paramètres
-    ----------
-    series : pd.Series
-        Série de vitesses (m/s), index daté (datetime64[ns]).
-        On suppose que la série représente déjà des maxima journaliers.
-    return_period_years : float
-        Période de retour souhaitée (en années), ex. 50, 100, 200.
-    min_years : int
-        Nombre minimal d'années de données de maxima annuels pour faire le fit.
-
-    Retour
-    ------
-    float ou None
-        Niveau de retour (m/s) arrondi à 0.01, ou None si non calculable.
+    Compute a return level for a given period using a Gumbel fit
+    on daily maxima (m/s).
     """
     if series is None or series.empty:
         return None
 
-    # Nettoyage
+    # Cleanup
     s = series.dropna()
     if s.empty:
         return None
 
-    # Maxima annuels
-    # On regroupe par année civile basée sur l'index temporel
+    # Annual maxima grouped by calendar year
     annual_max = s.groupby(s.index.year).max()
 
     if len(annual_max) < min_years:
         print(
-            f"  [Avertissement] Série trop courte ({len(annual_max)} ans) "
-            f"pour un ajustement Gumbel robuste (min {min_years} ans)."
+            f"  [Warning] Series too short ({len(annual_max)} years) "
+            f"for a robust Gumbel fit (min {min_years} years)."
         )
         return None
 
     try:
-        # Ajustement Gumbel sur les maxima annuels
+        # Gumbel fit on annual maxima
         loc, scale = gumbel_r.fit(annual_max.values)
         p = 1.0 - 1.0 / float(return_period_years)
         rl = gumbel_r.ppf(p, loc=loc, scale=scale)
         return float(np.round(rl, 2))
     except Exception as e:
-        print(f"  [Erreur] Ajustement Gumbel impossible : {e}")
+        print(f"  [Error] Gumbel fit failed: {e}")
         return None
 
 
@@ -106,13 +89,8 @@ def compute_return_level(
 
 def _normalize_dataframe_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Harmonise les colonnes minimales attendues :
-    - time (datetime)
-    - windspeed_mean
-    - windspeed_gust
-    - wind_direction
-
-    Sans lever d'erreur si certaines colonnes sont absentes.
+    Normalize minimal expected columns (time, windspeed_mean/gust, wind_direction)
+    without failing if some are missing.
     """
     df = df.copy()
 
@@ -125,7 +103,7 @@ def _normalize_dataframe_columns(df: pd.DataFrame) -> pd.DataFrame:
         # On laisse sans time ; les sections qui en ont besoin passeront
         return df
 
-    # Normalisation des noms de colonnes vent
+    # Normalize wind column names
     col_map = {}
     if "wind_speed" in df.columns and "windspeed_mean" not in df.columns:
         col_map["wind_speed"] = "windspeed_mean"
@@ -142,24 +120,8 @@ def _normalize_dataframe_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 def _load_dataframes_from_csv(site_folder: str) -> Dict[str, pd.DataFrame]:
     """
-    Charge les CSV journaliers présents dans le dossier du site et les
-    associe à une clé de source standardisée.
-
-    Pour éviter les confusions, on ne charge que les fichiers journaliers
-    (par exemple 'era5_daily_*' mais pas 'era5_*' horaire).
-
-    Mapping actuel des préfixes de fichiers -> clé de source :
-      - meteostat1_*      -> 'meteostat1'
-      - meteostat2_*      -> 'meteostat2'
-      - noaa_station1_*   -> 'noaa_station1'
-      - noaa_station2_*   -> 'noaa_station2'
-      - noaa_*            -> 'noaa'
-      - openmeteo_*       -> 'openmeteo'
-      - nasa_power_*      -> 'nasa_power'
-      - era5_daily_*      -> 'era5'
-      - visualcrossing_*  -> 'visualcrossing'
-
-    Toute autre CSV est ignorée dans ce pipeline.
+    Load daily CSV files in the site folder and map them to a standard source key.
+    Only daily files are loaded (e.g., era5_daily_*, not hourly).
     """
     prefix_mappings: List[Tuple[str, str]] = [
         ("meteostat1", "meteostat1"),
@@ -193,7 +155,7 @@ def _load_dataframes_from_csv(site_folder: str) -> Dict[str, pd.DataFrame]:
         try:
             df = pd.read_csv(file)
         except Exception as e:
-            print(f"  [Erreur] Lecture CSV échouée pour {file.name}: {e}")
+            print(f"  [Error] Failed to read CSV {file.name}: {e}")
             continue
 
         df = _normalize_dataframe_columns(df)
@@ -213,41 +175,24 @@ def run_analysis_for_site(
     dataframes: Optional[Dict[str, pd.DataFrame]] = None,
     return_periods_years: Optional[Iterable[float]] = None,
 ) -> None:
+    """Run the full analysis for one site.
+    - Expects daily CSVs per source in site_folder (or in-memory DataFrames).
+    - Uses building code thresholds from site_config (mean/gust 50y).
+    - Computes coverage, stats, plots, extremes, roses, return levels.
     """
-    Analyse complète des données pour un site.
-
-    Paramètres
-    ----------
-    site_name : str
-        Nom du site (utilisé dans les fichiers de sortie).
-    site_folder : str
-        Dossier de travail du site (CSV d'entrée + figures de sortie).
-    site_config : dict
-        Config du site (tirée de modele_sites.csv) incluant notamment :
-        - building_code_windspeed_mean_50y
-        - building_code_windspeed_gust_50y
-        - éventuellement une clé 'return_periods_years' (liste de périodes).
-    dataframes : dict[str, DataFrame] ou None
-        Si fourni et non vide, permet de passer directement les DataFrames
-        déjà chargés en mémoire. Sinon, les CSV sont relus dans site_folder.
-    return_periods_years : Iterable[float] ou None
-        Liste des périodes de retour à calculer (ex. [50, 100, 200]).
-        Si None, on cherche dans site_config['return_periods_years'] ou
-        on utilise [50] par défaut.
-    """
-    print(f"=== Analyse pour le site : {site_name} ===")
+    print(f"=== Analysis for site: {site_name} ===")
 
     # ------------------------------------------------------------
-    # 1. Seuils Building Code (fournis par modele_sites.csv)
+    # 1. Building Code thresholds (from modele_sites.csv)
     # ------------------------------------------------------------
     bc_mean_threshold = _get_config_float(site_config, "building_code_windspeed_mean_50y", 25.0)
     bc_gust_threshold = _get_config_float(site_config, "building_code_windspeed_gust_50y", 25.0)
 
 
-    print(f"Seuil Building Code (vent moyen) : {bc_mean_threshold:.2f} m/s")
-    print(f"Seuil Building Code (rafale)     : {bc_gust_threshold:.2f} m/s")
+    print(f"Building Code threshold (mean wind) : {bc_mean_threshold:.2f} m/s")
+    print(f"Building Code threshold (gust)     : {bc_gust_threshold:.2f} m/s")
 
-    # Périodes de retour à calculer
+    # Return periods to compute
     if return_periods_years is None:
         # dans la config, on peut stocker quelque chose comme "50,100,200"
         conf_rp = site_config.get("return_periods_years", None)
@@ -263,18 +208,18 @@ def run_analysis_for_site(
 
     return_periods_years = list(return_periods_years)
 
-    # Dossier de sortie pour figures & tableaux
+    # Output folder for figures & tables
     output_dir = os.path.join(site_folder, "figures_and_tables")
     os.makedirs(output_dir, exist_ok=True)
 
     # ------------------------------------------------------------
-    # 2. Chargement des données (en priorité via dataframes)
+    # 2. Load data (prefer in-memory DataFrames)
     # ------------------------------------------------------------
     if dataframes:
-        print("Chargement des données depuis les DataFrames fournis...")
+        print("Loading data from provided DataFrames...")
         normalized = {}
         for name, df in dataframes.items():
-            # On ignore toutes les entrées vides ou non-DataFrame
+            # Skip empty / non-DataFrame entries
             if df is None:
                 continue
             if not isinstance(df, pd.DataFrame):
@@ -284,12 +229,12 @@ def run_analysis_for_site(
             normalized[name] = _normalize_dataframe_columns(df)
         dataframes = normalized
     else:
-        print("Chargement des données depuis les CSV journaliers...")
+        print("Loading data from daily CSV files...")
         dataframes = _load_dataframes_from_csv(site_folder)
 
 
     if not dataframes:
-        print("Aucune donnée trouvée pour ce site. Analyse interrompue.")
+        print("No data found for this site. Analysis stopped.")
         return
 
     # On retire explicitement les sources vides
@@ -299,38 +244,37 @@ def run_analysis_for_site(
     }
 
     if not dataframes:
-        print("Tous les DataFrames sont vides. Analyse interrompue.")
+        print("All DataFrames are empty. Analysis stopped.")
         return
 
     # ------------------------------------------------------------
-    # 2.b. Forcer ERA5 à utiliser la série journalière agrégée
+    # 2.b. Force ERA5 to use the aggregated daily series
     # ------------------------------------------------------------
-    # Si une source 'era5' est présente et que le fichier
-    # era5_daily_<site>.csv existe, on remplace le DataFrame
-    # par la version journalière (maxima journaliers).
+    # If 'era5' is present and era5_daily_<site>.csv exists, replace the DataFrame
+    # with the daily maxima version.
     if "era5" in dataframes:
         daily_path = os.path.join(site_folder, f"era5_daily_{site_name}.csv")
         if os.path.exists(daily_path):
             try:
                 df_daily = pd.read_csv(daily_path)
                 dataframes["era5"] = _normalize_dataframe_columns(df_daily)
-                print("  [ERA5] Utilisation des données journalières (era5_daily_*.csv) pour l'analyse.")
+                print("  [ERA5] Using daily series (era5_daily_*.csv) for analysis.")
             except Exception as e:
                 print(
-                    "  [ERA5] Erreur lecture fichier journalier, "
-                    f"utilisation de la série fournie : {e}"
+                    "  [ERA5] Error reading daily file, "
+                    f"using provided series: {e}"
                 )
 
-    # On retire explicitement les sources vides
+    # Drop explicitly empty sources
     dataframes = {
         name: df for name, df in dataframes.items()
         if isinstance(df, pd.DataFrame) and not df.empty
     }
 
     # ------------------------------------------------------------
-    # 3. Statistiques descriptives (vent moyen)
+    # 3. Descriptive stats (mean wind)
     # ------------------------------------------------------------
-    print("Calcul des statistiques descriptives (vent moyen)...")
+    print("Computing descriptive statistics (mean wind)...")
 
     stats_rows = []
     skipped_sources = []
@@ -362,33 +306,33 @@ def run_analysis_for_site(
         df_stats = df_stats.set_index("Source").round(2)
         df_stats = df_stats.rename(
             columns={
-                "count": "Nb de jours",
-                "mean": "Moyenne (m/s)",
-                "std": "Écart-type (m/s)",
+                "count": "Nb of days",
+                "mean": "Mean (m/s)",
+                "std": "Std dev (m/s)",
                 "min": "Min (m/s)",
-                "p05": "5e percentile (m/s)",
-                "p25": "25e percentile (m/s)",
-                "p50": "50e percentile (m/s)",
-                "p75": "75e percentile (m/s)",
-                "p95": "95e percentile (m/s)",
+                "p05": "5th percentile (m/s)",
+                "p25": "25th percentile (m/s)",
+                "p50": "50th percentile (m/s)",
+                "p75": "75th percentile (m/s)",
+                "p95": "95th percentile (m/s)",
                 "max": "Max (m/s)",
             }
         )
         stats_path = os.path.join(output_dir, "stats_windspeed_mean.csv")
         df_stats.to_csv(stats_path, index=True)
-        print(f"  → Statistiques sauvegardées : {stats_path}")
+        print(f"  -> Saved stats: {stats_path}")
     else:
-        print("  Aucun DataFrame éligible pour les stats descriptives.")
+        print("  No DataFrame eligible for descriptive stats.")
 
     if skipped_sources:
-        print("  Sources ignorées pour les stats descriptives (trop peu de données ou colonne absente) :")
+        print("  Sources skipped for descriptive stats (not enough data or missing columns):")
         for s in skipped_sources:
             print(f"    - {s}")
 
     # ------------------------------------------------------------
-    # 4. Qualité des données (couverture)
+    # 4. Data quality (coverage)
     # ------------------------------------------------------------
-    print("Évaluation de la qualité / couverture des données...")
+    print("Evaluating data quality / coverage...")
 
     coverage_rows = []
     for name, df in dataframes.items():
@@ -416,11 +360,11 @@ def run_analysis_for_site(
         coverage_rows.append(
             {
                 "Source": name,
-                "Première date": time_min.date(),
-                "Dernière date": time_max.date(),
-                "Nombre de lignes": nb_lignes,
-                "Couverture vent moyen (%)": round(coverage_mean, 1),
-                "Couverture rafales (%)": round(coverage_gust, 1),
+                "First date": time_min.date(),
+                "Last date": time_max.date(),
+                "Row count": nb_lignes,
+                "Mean wind coverage (%)": round(coverage_mean, 1),
+                "Gust coverage (%)": round(coverage_gust, 1),
             }
         )
 
@@ -428,17 +372,17 @@ def run_analysis_for_site(
         df_cov = pd.DataFrame(coverage_rows)
         cov_path = os.path.join(output_dir, "resume_qualite.csv")
         df_cov.to_csv(cov_path, index=False)
-        print(f"  → Taux de couverture sauvegardé : {cov_path}")
+        print(f"  -> Coverage saved: {cov_path}")
     else:
-        print("  Pas de données suffisantes pour calculer la couverture.")
+        print("  Not enough data to compute coverage.")
 
     # ------------------------------------------------------------
-    # 5. Histogrammes distributions vent moyen / rafales
+    # 5. Histograms for mean wind / gust distributions
     # ------------------------------------------------------------
-    print("Tracé des histogrammes de distributions...")
+    print("Plotting distribution histograms...")
 
     def plot_histograms(variable: str, title: str, filename: str, bc_threshold: float):
-        # On prépare une liste (source, série) pour les sources valides
+        # Build list of (source, series) for valid sources
         valid = []
         for name, df in dataframes.items():
             if variable in df.columns:
@@ -447,7 +391,7 @@ def run_analysis_for_site(
                     valid.append((name, series))
 
         if not valid:
-            print(f"  Aucun histogramme tracé pour {variable} (données insuffisantes).")
+            print(f"  No histogram plotted for {variable} (not enough data).")
             return
 
         n = len(valid)
@@ -480,7 +424,7 @@ def run_analysis_for_site(
             ax.axvline(bc_threshold, color="red", linestyle="--", linewidth=1.2)
             ax.set_title(f"{name}", fontsize=10)
             ax.set_xlabel(title)
-            ax.set_ylabel("Densité")
+            ax.set_ylabel("Density")
 
         fig.suptitle(f"Distribution des {title.lower()} par source", fontsize=13)
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
@@ -488,26 +432,26 @@ def run_analysis_for_site(
         outpath = os.path.join(output_dir, filename)
         fig.savefig(outpath, bbox_inches="tight")
         plt.close(fig)
-        print(f"  → Histogrammes {variable} sauvegardés : {outpath}")
+        print(f"  -> Histograms {variable} saved: {outpath}")
 
     plot_histograms(
         variable="windspeed_mean",
-        title="vitesses de vent moyen (m/s)",
+        title="mean wind speeds (m/s)",
         filename="histogrammes_windspeed_mean.png",
         bc_threshold=bc_mean_threshold,
     )
 
     plot_histograms(
         variable="windspeed_gust",
-        title="vitesses de vent en rafale (m/s)",
+        title="wind gust speeds (m/s)",
         filename="histogrammes_windspeed_gust.png",
         bc_threshold=bc_gust_threshold,
     )
 
     # ------------------------------------------------------------
-    # 6. Boxplots + jours au-dessus du Building Code
+    # 6. Boxplots + days above Building Code thresholds
     # ------------------------------------------------------------
-    print("Tracé des boxplots et comptage des jours extrêmes...")
+    print("Plotting boxplots and counting extreme days...")
 
     def process_outliers(
         dataframes: Dict[str, pd.DataFrame],
@@ -517,7 +461,7 @@ def run_analysis_for_site(
         filename_box: str,
         filename_outliers_hist: str,
     ):
-        # Concaténation
+        # Concatenation
         all_rows = []
         for name, df in dataframes.items():
             if varname in df.columns:
@@ -526,7 +470,7 @@ def run_analysis_for_site(
                     all_rows.append(pd.DataFrame({"Source": name, varname: s.values}))
 
         if not all_rows:
-            print(f"  Aucun boxplot tracé pour {varname} (données insuffisantes).")
+            print(f"  No boxplot plotted for {varname} (not enough data).")
             return
 
         df_all = pd.concat(all_rows, ignore_index=True)
@@ -548,31 +492,31 @@ def run_analysis_for_site(
         out_box = os.path.join(output_dir, filename_box)
         plt.savefig(out_box, bbox_inches="tight")
         plt.close()
-        print(f"  → Boxplot {varname} sauvegardé : {out_box}")
+        print(f"  -> Boxplot saved: {out_box}")
 
-        # Jours au-dessus du seuil BC
+        # Days above BC threshold
         df_extreme = df_all[df_all[varname] > bc_threshold]
         if df_extreme.empty:
-            print(f"  Aucun jour au-dessus du seuil BC pour {varname}.")
+            print(f"  No days above BC threshold for {varname}.")
             return
 
         counts = df_extreme["Source"].value_counts().sort_index()
 
         plt.figure(figsize=(6, 4))
         counts.plot(kind="bar")
-        plt.ylabel("Nombre de jours au-dessus du seuil")
-        plt.title(f"Jours extrêmes ({title_label}) par source\n(>{bc_threshold:.1f} m/s)")
+        plt.ylabel("Number of days above threshold")
+        plt.title(f"Extreme days ({title_label}) by source\n(>{bc_threshold:.1f} m/s)")
         plt.xticks(rotation=20, ha="right")
         plt.tight_layout()
         out_hist = os.path.join(output_dir, filename_outliers_hist)
         plt.savefig(out_hist, bbox_inches="tight")
         plt.close()
-        print(f"  → Histogramme de jours extrêmes {varname} sauvegardé : {out_hist}")
+        print(f"  -> Extreme-days histogram saved: {out_hist}")
 
     process_outliers(
         dataframes=dataframes,
         varname="windspeed_mean",
-        title_label="vitesses de vent moyen (m/s)",
+        title_label="mean wind speeds (m/s)",
         bc_threshold=bc_mean_threshold,
         filename_box="boxplot_windspeed_mean.png",
         filename_outliers_hist="outliers_hist_windspeed_mean.png",
@@ -581,16 +525,16 @@ def run_analysis_for_site(
     process_outliers(
         dataframes=dataframes,
         varname="windspeed_gust",
-        title_label="vitesses de vent en rafale (m/s)",
+        title_label="wind gust speeds (m/s)",
         bc_threshold=bc_gust_threshold,
         filename_box="boxplot_windspeed_gust.png",
         filename_outliers_hist="outliers_hist_windspeed_gust.png",
     )
 
     # ------------------------------------------------------------
-    # 7. Séries temporelles complètes (vent moyen / rafales)
+    # 7. Full time series (mean wind / gusts)
     # ------------------------------------------------------------
-    print("Tracé des séries temporelles complètes (journalières)...")
+    print("Plotting full daily time series...")
 
     def plot_timeseries_all_sources(
         dataframes: Dict[str, pd.DataFrame],
@@ -612,19 +556,19 @@ def run_analysis_for_site(
 
         if not found:
             plt.close()
-            print(f"  Aucune série temporelle tracée pour {variable}.")
+            print(f"  No time series plotted for {variable}.")
             return
 
         plt.axhline(bc_threshold, color="red", linestyle="--", linewidth=1.2)
         plt.xlabel("Date (UTC)")
         plt.ylabel(f"{variable} (m/s)")
-        plt.title(f"Séries temporelles journalières de {variable} – {site_name}")
+        plt.title(f"Daily time series of {variable} - {site_name}")
         plt.legend(loc="upper right", fontsize=8)
         plt.tight_layout()
         outpath = os.path.join(output_dir, f"time_series_{variable}.png")
         plt.savefig(outpath, bbox_inches="tight")
         plt.close()
-        print(f"  → Série temporelle {variable} sauvegardée : {outpath}")
+        print(f"  -> Time series saved: {outpath}")
 
     plot_timeseries_all_sources(
         dataframes=dataframes,
@@ -643,24 +587,24 @@ def run_analysis_for_site(
     )
 
     # ------------------------------------------------------------
-    # 8. Roses des vents directionnelles (max + occurrences)
+    # 8. Directional wind roses (max + occurrences)
     # ------------------------------------------------------------
-    print("Calcul et tracé des roses des vents (vent moyen)...")
+    print("Computing and plotting wind roses (mean wind)...")
 
     def _compute_direction_bins(series_dir: pd.Series, series_ws: pd.Series, bin_width_deg: int = 20):
         """
-        Regroupe les données par intervalles de direction de largeur bin_width_deg.
+        Group data by direction bins of width bin_width_deg.
 
-        Retourne :
-        - centers_deg : centre de chaque bin (en degrés)
-        - max_speeds  : vitesse max (windspeed_mean) dans chaque bin
-        - counts      : nombre d'occurrences dans chaque bin
+        Returns:
+        - centers_deg : bin centers (degrees)
+        - max_speeds  : max windspeed_mean per bin
+        - counts      : occurrences per bin
         """
         df = pd.DataFrame({"dir": series_dir, "ws": series_ws}).dropna()
         if df.empty:
             return np.array([]), np.array([]), np.array([])
 
-        # Réduction de dir dans [0,360)
+        # Reduce direction into [0, 360)
         df["dir"] = df["dir"] % 360.0
 
         edges = np.arange(0, 360 + bin_width_deg, bin_width_deg)
@@ -671,7 +615,7 @@ def run_analysis_for_site(
         for i in range(len(edges) - 1):
             low = edges[i]
             high = edges[i + 1]
-            # Dernier bin [340,360] inclusif sur 360
+            # Last bin [340,360] inclusive on 360
             if i == len(edges) - 2:
                 mask = (df["dir"] >= low) & (df["dir"] <= high)
             else:
@@ -694,10 +638,9 @@ def run_analysis_for_site(
         bin_width_deg: int = 20,
     ):
         """
-        Pour chaque source :
-            - calcule la vitesse maximale journalière par intervalle directionnel,
-            - trace une rose des vents où le rayon = vitesse max (m/s)
-              pour chaque bin de direction.
+        For each source:
+            - compute daily max speed per direction bin,
+            - plot wind rose where radius = max speed (m/s) per bin.
         """
         for name, df in dataframes.items():
             if "wind_direction" not in df.columns or "windspeed_mean" not in df.columns:
@@ -713,24 +656,20 @@ def run_analysis_for_site(
             fig = plt.figure(figsize=(6, 6))
             ax = plt.subplot(111, polar=True)
             ax.set_theta_zero_location("N")
-            ax.set_theta_direction(-1)  # sens horaire
+            ax.set_theta_direction(-1)  # clockwise
 
-            width = np.deg2rad(bin_width_deg) * 0.9  # léger recouvrement
+            width = np.deg2rad(bin_width_deg) * 0.9  # slight overlap
             ax.bar(theta, max_speeds, width=width, align="center", edgecolor="black")
 
-            ax.set_title(
-                f"Rose des vents – vitesses max par direction\n"
-                f"{site_name} – {name}",
-                fontsize=11,
-            )
+            ax.set_title(f"Wind rose - max speed by direction\n{site_name} - {name}", fontsize=11)
             ax.set_rlabel_position(225)
-            ax.set_ylabel("Vitesse maximale (m/s)")
+            ax.set_ylabel("Max speed (m/s)")
 
             outpath = os.path.join(output_dir, f"rose_max_windspeed_{name}.png")
             plt.tight_layout()
             plt.savefig(outpath, bbox_inches="tight")
             plt.close()
-            print(f"  → Rose des vents (max) sauvegardée : {outpath}")
+            print(f"  -> Wind rose (max) saved: {outpath}")
 
     def plot_wind_rose_frequency(
         dataframes: Dict[str, pd.DataFrame],
@@ -739,9 +678,9 @@ def run_analysis_for_site(
         bin_width_deg: int = 20,
     ):
         """
-        Pour chaque source :
-            - compte le nombre d'occurrences par bin directionnel,
-            - trace une rose des vents où le rayon = nombre d'occurrences.
+        For each source:
+            - count occurrences per direction bin,
+            - plot wind rose where radius = number of occurrences.
         """
         for name, df in dataframes.items():
             if "wind_direction" not in df.columns or "windspeed_mean" not in df.columns:
@@ -763,18 +702,17 @@ def run_analysis_for_site(
             ax.bar(theta, counts, width=width, align="center", edgecolor="black")
 
             ax.set_title(
-                f"Rose des vents – nombre d'occurrences par direction\n"
-                f"{site_name} – {name}",
+                f"Wind rose - number of occurrences per direction\n{site_name} - {name}",
                 fontsize=11,
             )
             ax.set_rlabel_position(225)
-            ax.set_ylabel("Nombre de jours")
+            ax.set_ylabel("Number of days")
 
             outpath = os.path.join(output_dir, f"rose_frequency_{name}.png")
             plt.tight_layout()
             plt.savefig(outpath, bbox_inches="tight")
             plt.close()
-            print(f"  → Rose des vents (occurrences) sauvegardée : {outpath}")
+            print(f"  -> Wind rose (occurrences) saved: {outpath}")
 
     plot_wind_rose_max_speed(
         dataframes=dataframes,
@@ -791,19 +729,19 @@ def run_analysis_for_site(
     )
 
     # ------------------------------------------------------------
-    # 9. Jours extrêmes (vent moyen / rafales) au-dessus du Building Code
+    # 9. Extreme days (mean wind / gusts) above Building Code thresholds
     # ------------------------------------------------------------
-    print("Analyse des jours extrêmes (au-dessus des seuils Building Code)...")
+    print("Analyzing extreme days above Building Code thresholds...")
 
-    def analyse_jours_extremes(
+    def analyze_extreme_days(
         dataframes: Dict[str, pd.DataFrame],
         varname: str,
         bc_threshold: float,
         output_dir: str,
     ):
         """
-        Pour chaque source, identifie les jours où varname > seuil BC,
-        calcule quelques indicateurs et produit des tableaux.
+        For each source, identify days with varname > BC threshold,
+        compute indicators and export tables.
         """
         summary_rows = []
         per_year_rows = []
@@ -820,15 +758,15 @@ def run_analysis_for_site(
             extreme = d[d[varname] > bc_threshold]
 
             if extreme.empty:
-                # On peut quand même garder une ligne avec 0 jour extrême
+                # Keep a row with 0 extreme days for completeness
                 summary_rows.append(
                     {
                         "Source": name,
                         "Variable": varname,
-                        "Seuil_BC (m/s)": bc_threshold,
-                        "Nb_jours_extremes": 0,
-                        "Valeur_max_extreme (m/s)": np.nan,
-                        "Date_valeur_max": "",
+                        "BC_threshold (m/s)": bc_threshold,
+                        "Nb_extreme_days": 0,
+                        "Max_extreme_value (m/s)": np.nan,
+                        "Date_max_value": "",
                     }
                 )
                 continue
@@ -842,29 +780,29 @@ def run_analysis_for_site(
                 {
                     "Source": name,
                     "Variable": varname,
-                    "Seuil_BC (m/s)": bc_threshold,
-                    "Nb_jours_extremes": nb_extreme,
-                    "Valeur_max_extreme (m/s)": max_val,
-                    "Date_valeur_max": date_max,
+                    "BC_threshold (m/s)": bc_threshold,
+                    "Nb_extreme_days": nb_extreme,
+                    "Max_extreme_value (m/s)": max_val,
+                    "Date_max_value": date_max,
                 }
             )
 
-            # Comptage par année
+            # Per-year counts
             yearly_counts = extreme.groupby("year").size()
             for year, count in yearly_counts.items():
                 per_year_rows.append(
                     {
                         "Source": name,
                         "Variable": varname,
-                        "Année": int(year),
-                        "Nb_jours_extremes": int(count),
+                        "Year": int(year),
+                        "Nb_extreme_days": int(count),
                     }
                 )
 
         if summary_rows:
             df_summary = pd.DataFrame(summary_rows)
 
-            # Nom des fichiers suivant la variable
+            # File names per variable
             if varname == "windspeed_gust":
                 summary_name = "rafales_extremes_resume.csv"
             else:
@@ -872,15 +810,15 @@ def run_analysis_for_site(
 
             out_summary = os.path.join(output_dir, summary_name)
             df_summary.to_csv(out_summary, index=False)
-            print(f"  → Résumé jours extrêmes ({varname}) : {out_summary}")
+            print(f"  -> Extreme days summary ({varname}): {out_summary}")
 
         if per_year_rows:
             df_year = pd.DataFrame(per_year_rows)
-            # Tableau pivot : index = année, colonnes = source, valeurs = nb_jours_extremes
+            # Pivot: index = year, columns = source, values = Nb_extreme_days
             pivot = df_year.pivot_table(
-                index="Année",
+                index="Year",
                 columns="Source",
-                values="Nb_jours_extremes",
+                values="Nb_extreme_days",
                 aggfunc="sum",
                 fill_value=0,
             ).sort_index()
@@ -892,16 +830,16 @@ def run_analysis_for_site(
 
             out_year = os.path.join(output_dir, year_name)
             pivot.to_csv(out_year)
-            print(f"  → Jours extrêmes par année ({varname}) : {out_year}")
+            print(f"  -> Extreme days per year ({varname}): {out_year}")
 
-    analyse_jours_extremes(
+    analyze_extreme_days(
         dataframes=dataframes,
         varname="windspeed_mean",
         bc_threshold=bc_mean_threshold,
         output_dir=output_dir,
     )
 
-    analyse_jours_extremes(
+    analyze_extreme_days(
         dataframes=dataframes,
         varname="windspeed_gust",
         bc_threshold=bc_gust_threshold,
@@ -909,14 +847,13 @@ def run_analysis_for_site(
     )
 
     # ------------------------------------------------------------
-    # 10. Périodes de retour (Gumbel) pour toutes les sources
+    # 10. Return periods (Gumbel) for all sources
     # ------------------------------------------------------------
-    print("Calcul des niveaux de retour (Gumbel) pour toutes les sources...")
+    print("Computing return levels (Gumbel) for all sources...")
 
     def export_annual_max(series: pd.Series, output_path: str):
         """
-        Exporte les maxima annuels d'une série sous forme de CSV simple :
-        Année, Max_value.
+        Export annual maxima of a series as a simple CSV: Year, Max_value.
         """
         s = series.dropna()
         if s.empty:
@@ -924,7 +861,7 @@ def run_analysis_for_site(
 
         annual_max = s.groupby(s.index.year).max()
         df_annual = pd.DataFrame(
-            {"Année": annual_max.index.astype(int), "Max_value (m/s)": annual_max.values}
+            {"Year": annual_max.index.astype(int), "Max_value (m/s)": annual_max.values}
         )
         df_annual.to_csv(output_path, index=False)
         return True
@@ -953,16 +890,16 @@ def run_analysis_for_site(
             )
             export_annual_max(series, out_annual)
 
-            # Niveaux de retour pour toutes les périodes demandées
+            # Return levels for all requested periods
             for rp in return_periods_years:
                 rl = compute_return_level(series, return_period_years=rp)
                 results_rows.append(
                     {
                         "Source": name,
                         "Variable": varname,
-                        "Return_period (ans)": rp,
+                        "Return_period (years)": rp,
                         "Return_level (m/s)": rl,
-                        "Seuil_BuildingCode (m/s)": bc_threshold,
+                        "BC_threshold (m/s)": bc_threshold,
                     }
                 )
 
@@ -970,27 +907,23 @@ def run_analysis_for_site(
         df_ret = pd.DataFrame(results_rows)
         ret_all_path = os.path.join(output_dir, "return_periods_gumbel.csv")
         df_ret.to_csv(ret_all_path, index=False)
-        print(f"  → Niveaux de retour (toutes périodes) : {ret_all_path}")
+        print(f"  -> Return levels (all periods): {ret_all_path}")
 
-        # Pour compatibilité v1 : on exporte encore un fichier 50 ans si 50 est demandé
+        # v1 compatibility: still export a 50y file when requested
         if any(abs(rp - 50.0) < 1e-6 for rp in return_periods_years):
-            df_50 = df_ret[df_ret["Return_period (ans)"] == 50.0].copy()
+            df_50 = df_ret[df_ret["Return_period (years)"] == 50.0].copy()
             ret_50_path = os.path.join(output_dir, "return_period_50y.csv")
             df_50.to_csv(ret_50_path, index=False)
-            print(f"  → Fichier compatibilité v1 (50 ans) : {ret_50_path}")
+            print(f"  -> v1 compatibility file (50y): {ret_50_path}")
 
     # ------------------------------------------------------------
-    # 11. Résumé final par site (INACTIF pour le moment)
+    # 11. Final site summary (currently inactive)
     # ------------------------------------------------------------
     """
-    # Section désactivée volontairement.
-    # L'ancienne version produisait un site_summary_*.csv mêlant
-    # plusieurs indicateurs mais dans un format jugé peu utile.
-    #
-    # À réécrire plus tard si besoin, à partir de :
-    # - df_cov (couverture),
-    # - df_stats (statistiques descriptives),
-    # - df_ret (niveaux de retour).
+    # Disabled on purpose.
+    # Previous version produced site_summary_*.csv combining multiple indicators
+    # in a format considered not very useful.
+    # Can be rewritten later if needed from df_cov / df_stats / df_ret.
     """
 
-    print(f"=== Fin de l'analyse pour le site : {site_name} ===")
+    print(f"=== Analysis finished for site: {site_name} ===")

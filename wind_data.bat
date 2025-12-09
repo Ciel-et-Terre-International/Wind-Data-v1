@@ -1,24 +1,24 @@
 @echo off
 chcp 65001 >nul
-title Wind Data - Initialisation projet
+title Wind Data - Project bootstrap
 echo ==========================================
-echo   Wind Data - Initialisation projet
+echo   Wind Data - Project bootstrap
 echo ==========================================
 
-REM Répertoire courant
-echo Répertoire courant : "%CD%"
+REM Current directory
+echo Current directory: "%CD%"
 
-REM Vérification des bibliothèques
-echo Vérification des bibliothèques essentielles...
-echo Tous les modules sont disponibles.
+REM Quick dependency check (placeholder)
+echo Checking essential libraries...
+echo All required modules appear available.
 
-REM Question utilisateur
-set /p input="Souhaitez-vous lancer script.py ? (O/N) : "
-if /i "%input%"=="O" (
-    echo Lancement de script.py...
+REM Ask user
+set /p input="Do you want to run script.py? (Y/N): "
+if /i "%input%"=="Y" (
+    echo Starting script.py...
     python script.py
 ) else (
-    echo Lancement annulé.
+    echo Launch cancelled.
 )
 
 pause

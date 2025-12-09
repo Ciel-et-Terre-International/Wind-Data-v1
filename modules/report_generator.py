@@ -6,28 +6,23 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 
 
 # -------------------------------------------------------------------
-# Utilitaires génériques (police, paragraphes, images, tableaux)
+# Generic helpers (fonts, paragraphs, images, tables)
 # -------------------------------------------------------------------
 
 def set_paragraph_font(paragraph, size=10):
-    """Applique une taille de police uniforme à tous les runs d’un paragraphe."""
+    """Apply a uniform font size to all runs in a paragraph."""
     for run in paragraph.runs:
         run.font.size = Pt(size)
 
 
 def insert_section_title(doc, title, level=1):
-    """
-    Insère un titre de section en utilisant le style de titre du template (Heading 1/2).
-    Exemple : "1 | Stations context".
-    """
+    """Insert a section title using the template heading style."""
     heading = doc.add_heading(title, level=level)
     set_paragraph_font(heading)
 
 
 def insert_paragraph(doc, text, align=WD_PARAGRAPH_ALIGNMENT.LEFT, size=9):
-    """
-    Insère un paragraphe de texte explicatif.
-    """
+    """Insert a body paragraph with optional alignment and size."""
     para = doc.add_paragraph(text)
     para.alignment = align
     set_paragraph_font(para, size=size)
@@ -35,7 +30,7 @@ def insert_paragraph(doc, text, align=WD_PARAGRAPH_ALIGNMENT.LEFT, size=9):
 
 
 def insert_spacer(doc, size=6):
-    """Insère un petit paragraphe vide pour créer un espace vertical."""
+    """Insert an empty paragraph to create vertical spacing."""
     spacer = doc.add_paragraph()
     set_paragraph_font(spacer, size=size)
     return spacer
@@ -43,20 +38,18 @@ def insert_spacer(doc, size=6):
 
 def insert_image_if_exists(doc, path, width=6.0, caption=None):
     """
-    Insère une image si elle existe, centrée, avec éventuellement une légende.
-    width est en pouces (Inches).
+    Insert an image if it exists, centered, with an optional caption.
+    Width is expressed in inches.
     """
     if not os.path.exists(path):
         return
 
-    # Paragraphe contenant l'image
     paragraph = doc.add_paragraph()
     run = paragraph.add_run()
     run.add_picture(path, width=Inches(width))
     paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
     set_paragraph_font(paragraph, size=6)
 
-    # Légende optionnelle sous la figure
     if caption:
         cap = doc.add_paragraph(caption)
         cap.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
@@ -67,9 +60,8 @@ def insert_image_if_exists(doc, path, width=6.0, caption=None):
 
 def insert_table_from_csv(doc, csv_path, title=None):
     """
-    Insère une table à partir d’un CSV (en conservant l’ordre des colonnes).
-    Si le fichier n’existe pas ou est vide, ne fait rien.
-
+    Insert a table from a CSV (keeping column order).
+    If the file does not exist or is empty, no action is taken.
     """
     if not os.path.exists(csv_path):
         return
@@ -84,12 +76,12 @@ def insert_table_from_csv(doc, csv_path, title=None):
     table = doc.add_table(rows=1, cols=len(df.columns))
     table.style = "Table Grid"
 
-    # En-têtes
+    # Headers
     hdr_cells = table.rows[0].cells
     for i, col in enumerate(df.columns):
         hdr_cells[i].text = str(col)
 
-    # Lignes
+    # Rows
     for _, row in df.iterrows():
         row_cells = table.add_row().cells
         for i, val in enumerate(row):
@@ -99,14 +91,11 @@ def insert_table_from_csv(doc, csv_path, title=None):
 
 
 # -------------------------------------------------------------------
-# Sections de rapport (1 à 8)
+# Report sections (1 … 8)
 # -------------------------------------------------------------------
 
 def _section_1_stations_context(doc, figures_dir, site_folder):
-    """
-    Stations context
-    Tableau des stations utilisées (ID, nom, distance, coordonnées).
-    """
+    """Stations context table (IDs, names, distances, coordinates)."""
     insert_section_title(doc, "Stations context", level=1)
 
     insert_paragraph(
@@ -117,7 +106,6 @@ def _section_1_stations_context(doc, figures_dir, site_folder):
         ),
     )
 
-    # On essaie d’abord dans figures_and_tables, puis à la racine du site.
     stations_csv_candidates = [
         os.path.join(figures_dir, "stations_context.csv"),
         os.path.join(site_folder, "stations_context.csv"),
@@ -129,11 +117,8 @@ def _section_1_stations_context(doc, figures_dir, site_folder):
 
 
 def _section_2_datas_quality(doc, figures_dir):
-    """
-    Datas quality
-    Résumé de la période d'étude et du taux de couverture, par source.
-    """
-    insert_section_title(doc, "Datas quality", level=1)
+    """Data quality: study period and coverage by source."""
+    insert_section_title(doc, "Data quality", level=1)
 
     insert_paragraph(
         doc,
@@ -147,10 +132,7 @@ def _section_2_datas_quality(doc, figures_dir):
 
 
 def _section_3_statistics_description(doc, figures_dir):
-    """
-    Statistics description
-    Statistiques descriptives des vitesses de vent moyen (m/s) par source.
-    """
+    """Descriptive statistics of mean wind speeds (m/s) by source."""
     insert_section_title(doc, "Statistics description", level=1)
 
     insert_paragraph(
@@ -166,10 +148,7 @@ def _section_3_statistics_description(doc, figures_dir):
 
 
 def _section_4_histograms(doc, figures_dir):
-    """
-    Histograms
-    Histogrammes des vitesses de vent moyen et de rafales, par source.
-    """
+    """Histograms of mean wind speeds and gusts, by source."""
     insert_section_title(doc, "Histograms", level=1)
 
     insert_paragraph(
@@ -195,10 +174,7 @@ def _section_4_histograms(doc, figures_dir):
 
 
 def _section_5_extreme_values(doc, figures_dir):
-    """
-    Extreme values analysis
-    Boxplots, histogrammes des jours extrêmes et tableaux de comptage.
-    """
+    """Extreme values analysis: boxplots, histograms of extreme days, summary tables."""
     insert_section_title(doc, "Extreme values analysis", level=1)
 
     insert_paragraph(
@@ -211,7 +187,7 @@ def _section_5_extreme_values(doc, figures_dir):
         ),
     )
 
-    # Boxplots + histogrammes de jours extrêmes
+    # Boxplots + histograms of extreme days
     insert_image_if_exists(
         doc,
         os.path.join(figures_dir, "boxplot_windspeed_mean.png"),
@@ -233,7 +209,7 @@ def _section_5_extreme_values(doc, figures_dir):
         width=5.0,
     )
 
-    # Tableaux jours extrêmes – vent moyen
+    # Extreme day tables - mean wind
     insert_paragraph(
         doc,
         "Summary of days above Building Code thresholds (mean wind, daily maxima).",
@@ -245,7 +221,7 @@ def _section_5_extreme_values(doc, figures_dir):
         doc, os.path.join(figures_dir, "vent_moyen_extremes_par_an.csv")
     )
 
-    # Tableaux jours extrêmes – rafales
+    # Extreme day tables - gusts
     insert_paragraph(
         doc,
         "Summary of days above Building Code thresholds (gust wind, daily maxima).",
@@ -259,11 +235,8 @@ def _section_5_extreme_values(doc, figures_dir):
 
 
 def _section_6_directional_analysis(doc, figures_dir):
-    """
-    Directional analysis – Compass roses
-    Roses des vents (vitesses max par secteur + fréquence d’occurrence).
-    """
-    insert_section_title(doc, "Directional analysis – Compass roses", level=1)
+    """Directional analysis - compass roses (max speeds and occurrence)."""
+    insert_section_title(doc, "Directional analysis - Compass roses", level=1)
 
     insert_paragraph(
         doc,
@@ -279,22 +252,19 @@ def _section_6_directional_analysis(doc, figures_dir):
     if not os.path.isdir(figures_dir):
         return
 
-    # Roses des vitesses max
+    # Max speed roses
     for f in sorted(os.listdir(figures_dir)):
         if f.startswith("rose_max_windspeed_") and f.endswith(".png"):
             insert_image_if_exists(doc, os.path.join(figures_dir, f), width=5.5)
 
-    # Roses de fréquence
+    # Frequency roses
     for f in sorted(os.listdir(figures_dir)):
         if f.startswith("rose_frequency_") and f.endswith(".png"):
             insert_image_if_exists(doc, os.path.join(figures_dir, f), width=5.5)
 
 
 def _section_7_time_series(doc, figures_dir):
-    """
-    Time series
-    Séries temporelles complètes des maxima journaliers (vent moyen / rafale).
-    """
+    """Full time series of daily maxima (mean wind / gust)."""
     insert_section_title(doc, "Time series", level=1)
 
     insert_paragraph(
@@ -320,10 +290,7 @@ def _section_7_time_series(doc, figures_dir):
 
 
 def _section_8_return_period_50y(doc, figures_dir):
-    """
-    Analysis of levels for a 50-year return period
-    Tableau des niveaux de retour (Gumbel) pour 50 ans, par source / variable.
-    """
+    """Return levels (Gumbel) for 50 years, by source/variable."""
     insert_section_title(
         doc, "Analysis of levels for a 50-year return period", level=1
     )
@@ -343,22 +310,20 @@ def _section_8_return_period_50y(doc, figures_dir):
 
 
 # -------------------------------------------------------------------
-# Génération principale du rapport
+# Main report generation
 # -------------------------------------------------------------------
 
 def generate_report(site_data, output_folder="data"):
     """
-    Génère le rapport Word pour un site, en utilisant le template Word (template.docx)
-    pour la mise en page (logo, bandeau, pieds de page…).
-
-    La structure suit le rapport ITAIPU :
-
+    Generate the Word report for a site, using the Word template (template.docx)
+    for layout (logo, header/footer).
+    Structure:
       1 | Stations context
-      2 | Datas quality
+      2 | Data quality
       3 | Statistics description
       4 | Histograms
       5 | Extreme values analysis
-      6 | Directional analysis – Compass roses
+      6 | Directional analysis - Compass roses
       7 | Time series
       8 | Analysis of levels for a 50-year return period
     """
@@ -370,30 +335,25 @@ def generate_report(site_data, output_folder="data"):
     output_docx = os.path.join(site_folder, "report", f"{site_name}.docx")
     os.makedirs(os.path.dirname(output_docx), exist_ok=True)
 
-    # Chargement du template Word
+    # Load template if present
     template_path = os.path.join(os.getcwd(), "template.docx")
     if os.path.exists(template_path):
         doc = Document(template_path)
     else:
-        print("template.docx introuvable. Utilisation d’un document Word vierge.")
+        print("template.docx not found. Using a blank Word document.")
         doc = Document()
 
-    # ------------------------------------------------------------------
-    # En-tête d’intro éventuel
-    # ------------------------------------------------------------------
-    # Petit paragraphe indiquant le site analysé (sous le bandeau du template).
+    # Intro banner
     insert_spacer(doc, size=6)
     intro = doc.add_paragraph()
     intro.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-    run = intro.add_run(f"{site_data['reference']} – {site_data['name']}")
+    run = intro.add_run(f"{site_data['reference']} - {site_data['name']}")
     run.bold = True
     run.font.size = Pt(16)
 
     insert_spacer(doc, size=10)
 
-    # ------------------------------------------------------------------
-    # Sections 1 à 8
-    # ------------------------------------------------------------------
+    # Sections 1 … 8
     _section_1_stations_context(doc, figures_dir, site_folder)
     doc.add_page_break()
     _section_2_datas_quality(doc, figures_dir)
@@ -410,8 +370,6 @@ def generate_report(site_data, output_folder="data"):
     doc.add_page_break()
     _section_8_return_period_50y(doc, figures_dir)
 
-    # ------------------------------------------------------------------
-    # Sauvegarde
-    # ------------------------------------------------------------------
+    # Save
     doc.save(output_docx)
-    print(f"Rapport DOCX généré : {output_docx}")
+    print(f"DOCX report generated: {output_docx}")

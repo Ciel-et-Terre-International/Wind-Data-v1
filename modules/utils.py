@@ -17,5 +17,5 @@ def calculate_distance_km(coord1, coord2):
     try:
         return round(geodesic(coord1, coord2).km, 2)
     except Exception as e:
-        print(f"Erreur lors du calcul de distance : {e}")
+        print(f"Error while computing distance: {e}")
         return None

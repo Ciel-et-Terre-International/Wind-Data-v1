@@ -5,9 +5,7 @@ import plotly.graph_objects as go
 
 
 def _format_site_hover(site):
-    """
-    Construit le texte d'infobulle pour un site.
-    """
+    """Build hover text for a site."""
     name = site.get("name", "")
     ref = site.get("reference", "")
     country = site.get("country", "")
@@ -22,21 +20,19 @@ def _format_site_hover(site):
 
     lines = []
     if ref or name:
-        lines.append(f"<b>{ref} – {name}</b>")
+        lines.append(f"<b>{ref} - {name}</b>")
     if country:
         lines.append(f"Country: {country}")
     if coords:
         lines.append(f"Coordinates: {coords}")
     if start and end:
-        lines.append(f"Period: {start} → {end}")
+        lines.append(f"Period: {start} to {end}")
 
     return "<br>".join(lines)
 
 
 def _format_meteostat_hover(site, station_key):
-    """
-    Construit le texte d'infobulle pour une station Meteostat (station1 / station2).
-    """
+    """Build hover text for a Meteostat station (station1 / station2)."""
     st = site.get(station_key) or {}
     if not st:
         return None
@@ -51,7 +47,7 @@ def _format_meteostat_hover(site, station_key):
     dist = st.get("distance_km", None)
     elev = st.get("elevation", None)
 
-    lines = [f"<b>Meteostat – {station_key}</b>"]
+    lines = [f"<b>Meteostat - {station_key}</b>"]
     if name:
         lines.append(f"Name: {name}")
     if sid:
@@ -64,19 +60,13 @@ def _format_meteostat_hover(site, station_key):
     site_name = site.get("name", "")
     ref = site.get("reference", "")
     if ref or site_name:
-        lines.append(f"Site: {ref} – {site_name}")
+        lines.append(f"Site: {ref} - {site_name}")
 
-    return {
-        "lat": float(lat),
-        "lon": float(lon),
-        "text": "<br>".join(lines),
-    }
+    return {"lat": float(lat), "lon": float(lon), "text": "<br>".join(lines)}
 
 
 def _format_noaa_hover(site, key):
-    """
-    Construit le texte d'infobulle pour une station NOAA (noaa1 / noaa2).
-    """
+    """Build hover text for a NOAA station (noaa1 / noaa2)."""
     st = site.get(key) or {}
     if not st:
         return None
@@ -91,7 +81,7 @@ def _format_noaa_hover(site, key):
     dist = st.get("distance_km", None)
     elev = st.get("elevation_m", None)
 
-    lines = [f"<b>NOAA – {key}</b>"]
+    lines = [f"<b>NOAA - {key}</b>"]
     if name:
         lines.append(f"Name: {name}")
     if station_id:
@@ -104,25 +94,18 @@ def _format_noaa_hover(site, key):
     site_name = site.get("name", "")
     ref = site.get("reference", "")
     if ref or site_name:
-        lines.append(f"Site: {ref} – {site_name}")
+        lines.append(f"Site: {ref} - {site_name}")
 
-    return {
-        "lat": float(lat),
-        "lon": float(lon),
-        "text": "<br>".join(lines),
-    }
+    return {"lat": float(lat), "lon": float(lon), "text": "<br>".join(lines)}
 
 
 def _collect_points(sites_data):
-    """
-    Regroupe les coordonnées et textes pour sites / stations.
-    """
+    """Gather coordinates and hover texts for sites and stations."""
     site_lats, site_lons, site_texts = [], [], []
     meteo_lats, meteo_lons, meteo_texts = [], [], []
     noaa_lats, noaa_lons, noaa_texts = [], [], []
 
     for site in sites_data:
-        # Site principal
         lat = site.get("latitude")
         lon = site.get("longitude")
         if lat is not None and lon is not None:
@@ -130,7 +113,6 @@ def _collect_points(sites_data):
             site_lons.append(float(lon))
             site_texts.append(_format_site_hover(site))
 
-        # Stations Meteostat (station1 / station2)
         for station_key in ("meteostat1", "meteostat2"):
             info = _format_meteostat_hover(site, station_key)
             if info is not None:
@@ -138,7 +120,6 @@ def _collect_points(sites_data):
                 meteo_lons.append(info["lon"])
                 meteo_texts.append(info["text"])
 
-        # Stations NOAA (noaa1 / noaa2)
         for key in ("noaa1", "noaa2"):
             info = _format_noaa_hover(site, key)
             if info is not None:
@@ -160,9 +141,7 @@ def _collect_points(sites_data):
 
 
 def _compute_center(site_lats, site_lons):
-    """
-    Centre approximatif de la carte (moyenne simple des lat/lon des sites).
-    """
+    """Approximate center of the map (mean latitude/longitude of sites)."""
     if not site_lats or not site_lons:
         return 0.0, 0.0
     return float(sum(site_lats) / len(site_lats)), float(sum(site_lons) / len(site_lons))
@@ -179,12 +158,9 @@ def _build_fig_scattergeo(
     noaa_lons,
     noaa_texts,
 ):
-    """
-    Version sans Mapbox, fond Natural Earth.
-    """
+    """Scattergeo (Natural Earth) version without Mapbox."""
     fig = go.Figure()
 
-    # Sites
     if site_lats:
         fig.add_trace(
             go.Scattergeo(
@@ -194,15 +170,10 @@ def _build_fig_scattergeo(
                 hoverinfo="text",
                 mode="markers",
                 name="Sites",
-                marker=dict(
-                    size=10,
-                    symbol="circle",
-                    line=dict(width=1, color="black"),
-                ),
+                marker=dict(size=10, symbol="circle", line=dict(width=1, color="black")),
             )
         )
 
-    # Meteostat
     if meteo_lats:
         fig.add_trace(
             go.Scattergeo(
@@ -212,15 +183,10 @@ def _build_fig_scattergeo(
                 hoverinfo="text",
                 mode="markers",
                 name="Meteostat stations",
-                marker=dict(
-                    size=7,
-                    symbol="square",
-                    line=dict(width=0.5, color="black"),
-                ),
+                marker=dict(size=7, symbol="square", line=dict(width=0.5, color="black")),
             )
         )
 
-    # NOAA
     if noaa_lats:
         fig.add_trace(
             go.Scattergeo(
@@ -230,11 +196,7 @@ def _build_fig_scattergeo(
                 hoverinfo="text",
                 mode="markers",
                 name="NOAA stations",
-                marker=dict(
-                    size=6,
-                    symbol="triangle-up",
-                    line=dict(width=0.5, color="black"),
-                ),
+                marker=dict(size=6, symbol="triangle-up", line=dict(width=0.5, color="black")),
             )
         )
 
@@ -256,7 +218,7 @@ def _build_fig_scattergeo(
 
     fig.update_layout(
         title=dict(
-            text="Wind Data – Sites & Stations",
+            text="Wind Data - Sites & Stations",
             x=0.5,
             xanchor="center",
             y=0.96,
@@ -292,17 +254,17 @@ def _build_fig_mapbox(
     mapbox_token,
 ):
     """
-    Version avec Mapbox (fond satellite).
+    Mapbox (satellite) version.
 
-    Sites      : rouge
+    Sites      : red
     NOAA       : cyan (triangle)
-    Meteostat  : magenta (cercle), dessiné en dernier pour apparaître au-dessus.
+    Meteostat  : magenta (circle), drawn last to be on top.
     """
     center_lat, center_lon = _compute_center(site_lats, site_lons)
 
     fig = go.Figure()
 
-    # NOAA (on dessine d'abord ce qui peut "cacher")
+    # NOAA first (so they don't hide sites)
     if noaa_lats:
         fig.add_trace(
             go.Scattermapbox(
@@ -312,15 +274,10 @@ def _build_fig_mapbox(
                 hoverinfo="text",
                 mode="markers",
                 name="NOAA stations",
-                marker=dict(
-                    size=9,
-                    symbol="triangle",
-                    color="cyan",
-                ),
+                marker=dict(size=9, symbol="triangle", color="cyan"),
             )
         )
 
-    # Sites
     if site_lats:
         fig.add_trace(
             go.Scattermapbox(
@@ -330,15 +287,10 @@ def _build_fig_mapbox(
                 hoverinfo="text",
                 mode="markers",
                 name="Sites",
-                marker=dict(
-                    size=11,
-                    symbol="circle",
-                    color="red",
-                ),
+                marker=dict(size=11, symbol="circle", color="red"),
             )
         )
 
-    # Meteostat – DESSINÉ EN DERNIER
     if meteo_lats:
         fig.add_trace(
             go.Scattermapbox(
@@ -348,11 +300,7 @@ def _build_fig_mapbox(
                 hoverinfo="text",
                 mode="markers",
                 name="Meteostat stations",
-                marker=dict(
-                    size=13,
-                    symbol="circle",
-                    color="magenta",  # couleur foncée très visible
-                ),
+                marker=dict(size=13, symbol="circle", color="magenta"),
             )
         )
 
@@ -364,7 +312,7 @@ def _build_fig_mapbox(
             zoom=4,
         ),
         title=dict(
-            text="Wind Data – Sites & Stations (Satellite)",
+            text="Wind Data - Sites & Stations (Satellite)",
             x=0.5,
             xanchor="center",
             y=0.96,
@@ -386,16 +334,12 @@ def _build_fig_mapbox(
     return fig
 
 
-
-
 def visualize_sites_plotly(sites_data, output_html_path="visualisation_plotly.html"):
     """
-    Génère une visualisation Plotly des sites et stations associés.
+    Generate a Plotly visualization of sites and their associated stations.
 
-    - Si une variable d'environnement MAPBOX_TOKEN est définie :
-        → utilise une carte satellite (Scattermapbox / Mapbox).
-    - Sinon :
-        → utilise la carte 2D Natural Earth (Scattergeo).
+    - If MAPBOX_TOKEN env var is defined: use satellite Mapbox background.
+    - Otherwise: use Natural Earth (Scattergeo).
     """
     (
         site_lats,
@@ -412,7 +356,7 @@ def visualize_sites_plotly(sites_data, output_html_path="visualisation_plotly.ht
     mapbox_token = os.getenv("MAPBOX_TOKEN", "").strip()
 
     if mapbox_token:
-        print("MAPBOX_TOKEN détecté → utilisation du fond satellite Mapbox.")
+        print("MAPBOX_TOKEN detected - using Mapbox satellite background.")
         fig = _build_fig_mapbox(
             site_lats,
             site_lons,
@@ -426,9 +370,7 @@ def visualize_sites_plotly(sites_data, output_html_path="visualisation_plotly.ht
             mapbox_token,
         )
     else:
-        print(
-            "MAPBOX_TOKEN non défini → utilisation du fond 'Natural Earth' (Scattergeo)."
-        )
+        print("MAPBOX_TOKEN not set - using 'Natural Earth' (Scattergeo) background.")
         fig = _build_fig_scattergeo(
             site_lats,
             site_lons,
@@ -442,4 +384,4 @@ def visualize_sites_plotly(sites_data, output_html_path="visualisation_plotly.ht
         )
 
     fig.write_html(output_html_path)
-    print(f"Visualisation Plotly générée : {output_html_path}")
+    print(f"Plotly visualization generated: {output_html_path}")

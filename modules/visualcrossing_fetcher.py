@@ -27,21 +27,22 @@ def fetch_visualcrossing_data(site_name, site_folder, lat, lon, start_date, end_
             f"&contentType=csv"
         )
 
-        print(f"Requête Visual Crossing pour {site_name} – année {year}...")
+        print(f"Visual Crossing request for {site_name} - year {year}...")
 
         response = requests.get(url)
         if response.status_code != 200:
-            raise Exception(f"Erreur Visual Crossing API : {response.status_code} - {response.text}")
+            raise Exception(f"Visual Crossing API error: {response.status_code} - {response.text}")
 
         df = pd.read_csv(io.StringIO(response.text))
 
-
-        df = df.rename(columns={
-            "datetime": "time",
-            "windspeed": "windspeed_mean",
-            "windgust": "windspeed_gust",
-            "winddir": "wind_direction"
-        })
+        df = df.rename(
+            columns={
+                "datetime": "time",
+                "windspeed": "windspeed_mean",
+                "windgust": "windspeed_gust",
+                "winddir": "wind_direction",
+            }
+        )
         df["time"] = pd.to_datetime(df["time"])
         df = df[["time", "windspeed_mean", "windspeed_gust", "wind_direction"]]
 
@@ -51,11 +52,11 @@ def fetch_visualcrossing_data(site_name, site_folder, lat, lon, start_date, end_
     output_path = os.path.join(site_folder, f"visualcrossing_{site_name}.csv")
     df_final.to_csv(output_path, index=False)
 
-    print(f"Données Visual Crossing enregistrées : {output_path}")
+    print(f"Visual Crossing data saved: {output_path}")
 
     return {
         "filename": os.path.basename(output_path),
         "filepath": output_path,
         "latitude": lat,
-        "longitude": lon
+        "longitude": lon,
     }

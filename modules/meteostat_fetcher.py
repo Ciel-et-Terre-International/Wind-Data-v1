@@ -9,9 +9,9 @@ from meteostat import Stations, Hourly
 
 def get_nearest_stations_info(lat, lon, limit=2):
     """
-    Retourne les stations Meteostat les plus proches d'un site donné.
+    Return the closest Meteostat stations for a given site.
 
-    Sortie :
+    Output structure:
         {
             "station1": {
                 "id": ...,
@@ -55,73 +55,68 @@ def _fetch_meteostat_daily_for_station(
     station_meta=None,
 ):
     """
-    Récupère les données horaires Meteostat pour UNE station, agrège par jour
-    et met au format standard pour l'analyse statistique.
+    Download Meteostat hourly data for ONE station, aggregate by day,
+    and format to the standard schema for the stats engine.
 
-    On utilise Meteostat Hourly (timezone=UTC) pour obtenir :
-        - wspd : vitesse de vent horaire (km/h, moyenne sur l'heure)
-        - wpgt : rafale horaire max (km/h)
-        - wdir : direction horaire (°)
+    Using Meteostat Hourly (timezone=UTC) we expect:
+        - wspd : hourly wind speed (km/h, mean over the hour)
+        - wpgt : hourly gust max (km/h)
+        - wdir : hourly wind direction (deg)
 
-    Conventions utilisées :
-        - On convertit systématiquement km/h → m/s (/3.6).
-        - Agrégats journaliers :
-            * windspeed_mean      : MAXIMUM journalier de la vitesse horaire (m/s)
-            * windspeed_daily_avg : moyenne journalière des vitesses horaires (m/s)
-            * windspeed_gust      : MAXIMUM journalier des rafales horaires (m/s)
-            * wind_direction      : moyenne vectorielle journalière de la direction (°)
-            * n_hours             : nombre de pas horaires utilisés
+    Conventions:
+        - Always convert km/h to m/s (/3.6).
+        - Daily aggregates:
+            * windspeed_mean      : daily MAX of hourly speeds (m/s)
+            * windspeed_daily_avg : daily average of hourly speeds (m/s)
+            * windspeed_gust      : daily MAX of hourly gusts (m/s)
+            * wind_direction      : daily vector-mean direction (deg)
+            * n_hours             : number of hourly samples
 
-    Facteurs optionnels :
-        - mean_correction_factor :
-            * multiplie windspeed_mean ET windspeed_daily_avg par ce facteur
-              (ex. correction 1h→10min).
-        - gust_correction_factor :
-            * Meteostat fournit déjà des rafales via wpgt.
-            * Si gust_correction_factor est None :
-                - on utilise les rafales journalières telles quelles (max des wpgt_ms).
-            * Si gust_correction_factor est spécifié :
-                - on NE modifie PAS les rafales existantes (valeurs non NaN),
-                - pour les jours où windspeed_gust est NaN (pas de rafale dispo),
-                  on crée un fallback : windspeed_gust = gust_correction_factor * windspeed_mean.
+    Optional factors:
+        - mean_correction_factor:
+            * multiply windspeed_mean AND windspeed_daily_avg by this factor (e.g., 1h->10min correction).
+        - gust_correction_factor:
+            * Meteostat already provides gusts via wpgt.
+            * If gust_correction_factor is None:
+                - use existing gusts (max of wpgt_ms).
+            * If gust_correction_factor is provided:
+                - do NOT change existing gusts (non-NaN),
+                - when windspeed_gust is NaN, fill fallback = gust_correction_factor * windspeed_mean.
     """
-    # Parse dates (YYYY-MM-DD)
     start = datetime.strptime(start_date, "%Y-%m-%d")
     end = datetime.strptime(end_date, "%Y-%m-%d")
 
-    # Données horaires (timezone=UTC pour alignement avec les autres sources)
+    # Hourly data (timezone=UTC for alignment)
     data = Hourly(station_id, start, end, timezone="UTC")
-    df = data.fetch().reset_index()  # index 'time' → colonne 'time'
+    df = data.fetch().reset_index()  # index 'time' to column 'time'
 
     if df.empty:
-        print(f"Pas de données horaires pour Meteostat station {station_id}")
+        print(f"No hourly data for Meteostat station {station_id}")
         return pd.DataFrame()
 
-    # Colonnes attendues :
+    # Expected columns
     required_cols = {"time", "wspd", "wpgt", "wdir"}
     missing = required_cols - set(df.columns)
     if missing:
         raise ValueError(
-            f"Colonnes manquantes dans les données Meteostat Hourly pour la station "
-            f"{station_id} : {missing}"
+            f"Missing columns in Meteostat Hourly for station {station_id}: {missing}"
         )
 
     df["time"] = pd.to_datetime(df["time"], utc=True)
 
-    # Conversion km/h → m/s
+    # Convert km/h to m/s
     df["wspd_ms"] = df["wspd"].astype(float) / 3.6
     df["wpgt_ms"] = df["wpgt"].astype(float) / 3.6
 
-    # Direction pour moyenne vectorielle
+    # Direction for vector mean
     dir_rad = np.deg2rad(df["wdir"].astype(float))
     df["dir_u"] = np.cos(dir_rad)
     df["dir_v"] = np.sin(dir_rad)
 
-    # Date (UTC)
+    # Daily grouping
     df["date"] = df["time"].dt.date
     grouped = df.groupby("date")
 
-    # Agrégats
     daily_speed_max = grouped["wspd_ms"].max()
     daily_speed_avg = grouped["wspd_ms"].mean()
     daily_gust_max = grouped["wpgt_ms"].max()
@@ -136,15 +131,15 @@ def _fetch_meteostat_daily_for_station(
     daily_df = pd.DataFrame(
         {
             "time": pd.to_datetime(daily_speed_max.index),
-            "windspeed_mean": daily_speed_max.values,          # max journalier des vitesses
-            "windspeed_daily_avg": daily_speed_avg.values,     # moyenne journalière
+            "windspeed_mean": daily_speed_max.values,          # daily max of hourly means
+            "windspeed_daily_avg": daily_speed_avg.values,     # daily average of hourly means
             "wind_direction": daily_direction.values,
-            "windspeed_gust": daily_gust_max.values,           # max journalier des rafales
+            "windspeed_gust": daily_gust_max.values,           # daily max of hourly gusts
             "n_hours": n_hours.values,
         }
     )
 
-    # Facteur correctif optionnel sur la moyenne
+    # Optional correction on mean speeds
     if mean_correction_factor is not None:
         daily_df["windspeed_mean"] = (
             daily_df["windspeed_mean"] * float(mean_correction_factor)
@@ -156,16 +151,14 @@ def _fetch_meteostat_daily_for_station(
     else:
         daily_df["mean_correction_factor"] = 1.0
 
-    # Facteur correctif optionnel sur les rafales (fallback uniquement)
+    # Optional gust fallback factor (only for NaN gusts)
     if gust_correction_factor is not None:
         factor = float(gust_correction_factor)
-        # On ne touche pas aux rafales existantes (non NaN).
-        # On ne l'utilise que pour remplir les NaN.
         mask_nan = daily_df["windspeed_gust"].isna()
         if mask_nan.any():
             print(
-                f"[Meteostat] Application gust_correction_factor={factor} sur les jours "
-                "sans rafales (windspeed_gust NaN) à partir de windspeed_mean."
+                f"[Meteostat] Applying gust_correction_factor={factor} on days "
+                "without gusts (NaN) using windspeed_mean as fallback."
             )
             daily_df.loc[mask_nan, "windspeed_gust"] = (
                 daily_df.loc[mask_nan, "windspeed_mean"] * factor
@@ -174,7 +167,7 @@ def _fetch_meteostat_daily_for_station(
     else:
         daily_df["gust_correction_factor"] = 1.0
 
-    # Métadonnées
+    # Metadata
     meta = station_meta or {}
     daily_df["source"] = "meteostat"
     daily_df["station_id"] = station_id
@@ -200,66 +193,33 @@ def fetch_meteostat_data(
     gust_correction_factor=None,
 ):
     """
-    Wrapper haut niveau compatible v1, avec standardisation des colonnes et métadonnées.
+    High-level wrapper to fetch Meteostat for one or two stations.
 
-    Comportement :
-    - Si station_ids est None :
-        * Recherche les 2 stations Meteostat les plus proches.
-    - Pour chaque station :
-        * Télécharge les données horaires (Hourly)
-        * Agrège en journalier :
-            - windspeed_mean      [m/s] : max journalier
-            - windspeed_daily_avg [m/s] : moyenne journalière
-            - windspeed_gust      [m/s] : max journalier des rafales (ou fallback)
-            - wind_direction      [°]   : moyenne vectorielle journalière
-            - n_hours
-        * Applique les facteurs de correction éventuels
-        * Ajoute les métadonnées station
-        * Sauvegarde un CSV : meteostat{i}_{site_name}.csv dans site_folder
+    Returns a dict with keys meteostat1 / meteostat2 when available.
     """
-    os.makedirs(site_folder, exist_ok=True)
-
-    # Stations à utiliser
-    meta_info = {}
     if station_ids is None:
-        meta_info = get_nearest_stations_info(lat, lon, limit=2)
-        station_ids = [meta_info[k]["id"] for k in sorted(meta_info.keys())]
-    else:
-        # si station_ids est donné, on essaie tout de même de récupérer des infos de base
-        # via nearby, mais ce n'est pas critique
-        meta_info = {}
+        station_ids = []
 
-    data_collected = {}
+    data = {}
+    station_meta = get_nearest_stations_info(lat, lon, limit=max(2, len(station_ids)))
 
-    for i, station_id in enumerate(station_ids, 1):
-        print(f"Téléchargement Meteostat pour station : {station_id}")
-        station_key = f"station{i}"
-        station_meta = meta_info.get(station_key, {})
-
-        try:
-            df_station = _fetch_meteostat_daily_for_station(
-                station_id=station_id,
-                lat=lat,
-                lon=lon,
-                start_date=start_date,
-                end_date=end_date,
-                mean_correction_factor=mean_correction_factor,
-                gust_correction_factor=gust_correction_factor,
-                station_meta=station_meta,
-            )
-        except Exception as e:
-            print(f"Erreur Meteostat {i} : {e}")
-            continue
-
-        if df_station.empty:
-            print(f"Pas de données Meteostat pour la station {station_id}")
-            continue
-
+    for i, station_id in enumerate(station_ids[:2], 1):
+        meta = station_meta.get(f"station{i}", {})
+        daily_df = _fetch_meteostat_daily_for_station(
+            station_id=station_id,
+            lat=lat,
+            lon=lon,
+            start_date=start_date,
+            end_date=end_date,
+            mean_correction_factor=mean_correction_factor,
+            gust_correction_factor=gust_correction_factor,
+            station_meta=meta,
+        )
+        # Save CSV
         filename = f"meteostat{i}_{site_name}.csv"
         filepath = os.path.join(site_folder, filename)
-        df_station.to_csv(filepath, index=False)
-        print(f"Données Meteostat enregistrées : {filepath}")
+        daily_df.to_csv(filepath, index=False)
+        print(f"Saved Meteostat station{i} daily CSV: {filepath}")
+        data[f"meteostat{i}"] = daily_df
 
-        data_collected[f"meteostat{i}"] = df_station
-
-    return data_collected
+    return data
