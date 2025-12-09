@@ -237,29 +237,37 @@ See full technical specification in [DATA.md](./docs/DATA.md).
 # Installation
 
 This project is hosted internally (SharePoint) and on GitHub.  
-Recommended : Synchronize the folder on your computer, install the following softwares and dependencies.  
-Open the synced folder with Visual Studio Code.  
-Then you will be in a good environment to run the tool or work on it.  
+**Recommended : Synchronize the folder on your computer, install the following softwares and dependencies.**  
 
-Internal SharePoint starting point (to be synced):  
-[Sharepoint path](https://cielterre.sharepoint.com/:f:/s/RD-Ressources/EsJXg3QcLeVBi4HyLlOAcQcBdlN-OUI6me08iRINvX17Dg?e=HzSON8)  
+Open the synced folder with **Visual Studio Code**.  
+You will then have a suitable environment for running the tool or working on it.   
+
+Internal SharePoint starting point (can be synced, or opened from the R&D-Ressources synced folder):  
+[Wind Historical Tool](https://cielterre.sharepoint.com/:f:/s/RD-Ressources/EsJXg3QcLeVBi4HyLlOAcQcBdlN-OUI6me08iRINvX17Dg?e=HzSON8)  
 
 GitHub repository:  
 <https://github.com/Ciel-et-Terre-International/rd-wind-data>
 
 ### Requirements
 
+
+All the files for the installation are available here :  
+[Files for installation](https://cielterre.sharepoint.com/:f:/s/RD-Ressources/Estcyp2PSGNBlR6JZS1QCEsBCWrvcVDDY5BW7FSVjucHPQ?e=tLs6F6)  
+
+
 - **Conda (Anaconda or Miniconda)**  
   Download and install: <https://www.anaconda.com/download>  
   During installation, allow Conda to be added to `PATH`.
 
 - **Visual Studio Code**  
-  <https://code.visualstudio.com/>  
+  Download and install: <https://code.visualstudio.com/>  
   Set the **Command Prompt** as default terminal and open the project folder.
 
 - **ERA5 credentials (`.cdsapirc`)**  
   Download from SharePoint and place it in:  
   `C:\Users\%USERNAME%\.cdsapirc`
+
+
 
 [Optional]  
 Clone the GitHub repository:
@@ -300,7 +308,7 @@ conda activate wind_data
 wind_data.bat
 ```
 
-Follow the prompts:
+**Follow the prompts:**
 
 1. Confirm you want to run `script.py`.  
 2. Enter **start** and **end** dates for the study period.  
